@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="D mágica de Disney">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="36%" r="78%">
+      <stop offset="0%" stop-color="#35529e"/>
+      <stop offset="52%" stop-color="#152650"/>
+      <stop offset="100%" stop-color="#050a16"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0%" stop-color="#FFF7D2"/>
+      <stop offset="30%" stop-color="#FFDD77"/>
+      <stop offset="62%" stop-color="#F2B63C"/>
+      <stop offset="100%" stop-color="#C4871F"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD86B" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#FFD86B" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#FFD86B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tipglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF6D8" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#FFF6D8" stop-opacity="0"/>
+    </radialGradient>
+    <path id="spark" d="M0,-1 C0.09,-0.09 0.09,-0.09 1,0 C0.09,0.09 0.09,0.09 0,1 C-0.09,0.09 -0.09,0.09 -1,0 C-0.09,-0.09 -0.09,-0.09 0,-1 Z"/>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <g transform="translate(256,256) scale(0.72) translate(-256,-256)">
+    <g fill="#cfe0ff">
+      <circle cx="72" cy="96" r="3" opacity="0.85"/>
+      <circle cx="140" cy="60" r="2.2" opacity="0.7"/>
+      <circle cx="430" cy="72" r="2.6" opacity="0.8"/>
+      <circle cx="470" cy="196" r="2" opacity="0.6"/>
+      <circle cx="58" cy="250" r="2.4" opacity="0.7"/>
+      <circle cx="96" cy="430" r="2.8" opacity="0.75"/>
+      <circle cx="404" cy="452" r="2.2" opacity="0.65"/>
+      <circle cx="330" cy="70" r="1.8" opacity="0.55"/>
+    </g>
+
+    <circle cx="256" cy="250" r="228" fill="url(#glow)"/>
+
+    <g>
+      <path fill="url(#gold)" fill-rule="evenodd" d="M200,96 C176,96 162,114 162,144 L162,368 C162,398 176,416 200,416 L262,416 C360,416 424,352 424,256 C424,160 360,96 262,96 Z M240,168 L240,344 L264,344 C316,344 348,306 348,256 C348,206 316,168 264,168 Z"/>
+      <rect x="146" y="92" width="120" height="26" rx="12" fill="url(#gold)"/>
+      <rect x="146" y="394" width="120" height="26" rx="12" fill="url(#gold)"/>
+      <path fill="url(#gold)" d="M172,404 C142,440 92,454 56,430 C96,472 164,468 198,420 Z"/>
+    </g>
+
+    <path d="M432,96 C472,152 452,252 372,302 C330,328 286,342 248,344" fill="none" stroke="#FFE9A8" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0.5 15" opacity="0.75"/>
+    <line x1="352" y1="176" x2="424" y2="104" stroke="url(#gold)" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="432" cy="96" r="30" fill="url(#tipglow)"/>
+    <use xlink:href="#spark" transform="translate(432,96) scale(34)" fill="#FFFDF2"/>
+
+    <g>
+      <use xlink:href="#spark" transform="translate(472,158) scale(17)" fill="#FFF3C4"/>
+      <use xlink:href="#spark" transform="translate(412,58) scale(12)" fill="#FFFFFF"/>
+      <use xlink:href="#spark" transform="translate(150,168) scale(14)" fill="#FFF3C4"/>
+      <use xlink:href="#spark" transform="translate(118,300) scale(21)" fill="#FFE9A8" opacity="0.92"/>
+      <use xlink:href="#spark" transform="translate(344,424) scale(15)" fill="#FFFFFF"/>
+      <use xlink:href="#spark" transform="translate(438,392) scale(11)" fill="#FFF3C4"/>
+      <use xlink:href="#spark" transform="translate(66,214) scale(9)" fill="#FFF3C4"/>
+      <use xlink:href="#spark" transform="translate(300,96) scale(9)" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+  </g>
+</svg>
