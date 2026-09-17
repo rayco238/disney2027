@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050a16">
+<meta name="description" content="Cuenta atras para el 14 de noviembre de 2027. Ilustracion animada del Hotel Disney Newport Bay Club, Disneyland Paris.">
+<title>Cuenta atras · Hotel Newport Bay Club · Disneyland Paris</title>
+<link rel="icon" href="data:,">
+<style>
+  :root{--ink:#eef3fa;--panel:rgba(8,16,32,.55);--edge:rgba(255,255,255,.16);--gold:#ffd98a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;overflow:hidden;background:#050a16;font-family:'Poppins','Segoe UI',system-ui,-apple-system,sans-serif;color:var(--ink)}
+  #scene{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .hud{position:fixed;z-index:10;pointer-events:none}
+  .glass{background:var(--panel);border:1px solid var(--edge);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+  #titleBox{top:16px;left:18px;text-align:left;padding:12px 20px}
+  #titleBox .sub{font-size:clamp(10px,1.5vw,13px);letter-spacing:.35em;text-transform:uppercase;color:var(--gold);opacity:.95}
+  #titleBox h1{font-size:clamp(15px,2.4vw,24px);font-weight:600;margin-top:3px;letter-spacing:.02em;white-space:nowrap}
+  #countdown{bottom:58px;left:50%;transform:translateX(-50%);display:flex;gap:clamp(8px,2vw,18px);padding:16px 26px;align-items:stretch}
+  .unit{text-align:center;min-width:clamp(56px,10vw,96px);position:relative}
+  .unit+.unit::before{content:"";position:absolute;left:-.45em;top:12%;height:76%;width:1px;background:var(--edge)}
+  .unit b{display:block;font-size:clamp(26px,5.2vw,54px);font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+  .unit span{font-size:clamp(9px,1.4vw,12px);letter-spacing:.22em;text-transform:uppercase;color:var(--gold);opacity:.95}
+  #cap{bottom:162px;left:50%;transform:translateX(-50%);padding:6px 14px;font-size:clamp(10px,1.5vw,13px);color:rgba(238,243,250,.85);letter-spacing:.1em;white-space:nowrap;border-radius:999px}
+  #cap b{color:var(--gold)}
+  #weatherBox{top:22px;right:22px;padding:10px 14px;font-size:clamp(10px,1.4vw,13px);text-align:right;line-height:1.5}
+  #weatherBox .c{color:var(--gold);font-weight:600}
+  #weatherBox .t{opacity:.8;font-variant-numeric:tabular-nums}
+  #clockBox{bottom:22px;left:22px;padding:9px 14px;font-size:clamp(10px,1.4vw,13px);opacity:.9}
+  #clockBox b{color:var(--gold)}
+  #note{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:10;font-size:clamp(9px,1.2vw,12px);letter-spacing:.18em;text-transform:uppercase;color:rgba(238,243,250,.6);text-shadow:0 1px 8px rgba(0,0,0,.6);pointer-events:none;white-space:nowrap}
+  #btnSim{bottom:22px;right:22px;pointer-events:auto;cursor:pointer;border:none;outline:none;color:var(--ink);font:inherit;font-size:12px;letter-spacing:.08em;padding:9px 12px;border-radius:12px;border:1px solid var(--edge);background:var(--panel);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  #btnSim:hover{background:rgba(255,255,255,.12)}
+  #panel{z-index:20;right:22px;bottom:74px;padding:14px;pointer-events:auto}
+  #panel[hidden]{display:none}
+  #panel .row{display:flex;gap:6px;flex-wrap:wrap;max-width:360px;justify-content:flex-end}
+  #panel button{cursor:pointer;border:1px solid var(--edge);border-radius:999px;padding:6px 11px;font:inherit;font-size:11.5px;letter-spacing:.04em;color:var(--ink);background:rgba(255,255,255,.06)}
+  #panel button.on{background:rgba(255,217,138,.85);color:#10233f;border-color:transparent;font-weight:600}
+  #panel button:hover{background:rgba(255,255,255,.16)}
+  #done{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(5,10,22,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #done .big{font-size:clamp(30px,7vw,84px);font-weight:700;color:var(--gold);text-align:center;text-shadow:0 4px 40px rgba(0,0,0,.6);padding:0 20px}
+  #done .big small{display:block;font-size:clamp(13px,2.4vw,22px);color:var(--ink);margin-top:14px;letter-spacing:.25em;text-transform:uppercase}
+  @media (max-width:620px){
+    #countdown{bottom:52px}
+    #cap{bottom:160px}
+    #weatherBox{top:14px;right:14px}
+    #clockBox{left:14px;bottom:64px}
+    #titleBox{top:14px;left:12px;padding:10px 14px;max-width:58vw}
+    #titleBox .sub{display:none}
+    #btnSim{font-size:11px;bottom:64px}
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<header class="hud glass" id="titleBox">
+  <div class="sub">Disneyland Park · Marne-la-Vallée, Francia</div>
+  <h1>Hotel Disney Newport Bay Club</h1>
+</header>
+
+<section class="hud glass" id="countdown">
+  <div class="unit"><b id="cD">--</b><span>Días</span></div>
+  <div class="unit"><b id="cH">--</b><span>Horas</span></div>
+  <div class="unit"><b id="cM">--</b><span>Min</span></div>
+  <div class="unit"><b id="cS">--</b><span>Seg</span></div>
+</section>
+
+<div class="hud glass" id="cap">Nos vamos el <b>14 de noviembre de 2027</b></div>
+
+<aside class="hud glass" id="weatherBox"><div id="wTemp">Cargando tiempo&hellip;</div></aside>
+
+<div class="hud glass" id="clockBox">París · <b id="clockT">--:--</b></div>
+
+<div id="note">Disneyland Paris · Newport Bay Club · 14 nov 2027</div>
+
+<button class="hud glass" id="btnSim">Simular entorno</button>
+<div class="hud glass" id="panel" hidden>
+  <div class="row">
+    <button data-m="auto">Automático</button>
+    <button data-m="day">Día</button>
+    <button data-m="night">Noche</button>
+    <button data-m="dusk">Atardecer</button>
+    <button data-m="rain">Lluvia</button>
+    <button data-m="snow">Nieve</button>
+    <button data-m="storm">Tormenta</button>
+    <button data-m="wind">Viento</button>
+  </div>
+</div>
+
+<div id="done"><div class="big">¡Llegó el día!<small>14 de noviembre de 2027</small></div></div>
+
+<script>
+(function(){
+"use strict";
+var TAU = Math.PI*2;
+var TARGET = new Date(Date.UTC(2027,10,13,23,0,0));
+var LAT = 48.8722, LON = 2.7762;
+
+var canvas = document.getElementById('scene');
+var ctx = canvas.getContext('2d');
+var cw = 0, ch = 0, dpr = 1;
+var simT = 0, lastT = performance.now(), cldT = 0;
+
+var mode = 'auto';
+var W = { temp:14, code:2, clouds:0.25, rain:0, snow:0, wind:10, windDir:200, fog:0, condition:'Cielo despejado' };
+var S = { clouds:0.25, rain:0, snow:0, wind:10, fog:0 };
+
+function clamp(x,a,b){ return x<a?a:(x>b?b:x); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function smooth(a,b,x){ var t=clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); }
+function mixc(a,b,t){ t=clamp(t,0,1); return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
+function cstr(c,a){ return 'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(a===undefined?1:a)+')'; }
+function rnd(n){ var s=Math.sin(n*127.1+311.7)*43758.5453; return s-Math.floor(s); }
+
+function solar(now){
+  var n = (now/86400000) + 2440587.5 - 2451545.0;
+  var L0 = ((280.460 + 0.9856474*n) % 360) * Math.PI/180;
+  var g  = ((357.528 + 0.9856003*n) % 360) * Math.PI/180;
+  var ecl = (23.439 - 0.0000004*n) * Math.PI/180;
+  var lambda = L0 + (1.915*Math.sin(g) + 0.020*Math.sin(2*g))*Math.PI/180;
+  var dec = Math.asin(Math.sin(ecl)*Math.sin(lambda));
+  var ra = Math.atan2(Math.cos(ecl)*Math.sin(lambda), Math.cos(lambda));
+  var gmst = (280.46061837 + 360.98564736629*n) * Math.PI/180;
+  var lst = gmst + LON*Math.PI/180;
+  var ha = ((lst - ra) % TAU);
+  if(ha > Math.PI) ha -= TAU;
+  if(ha < -Math.PI) ha += TAU;
+  var lat = LAT*Math.PI/180;
+  var elev = Math.asin(Math.sin(lat)*Math.sin(dec) + Math.cos(lat)*Math.cos(dec)*Math.cos(ha));
+  var az = ((Math.atan2(Math.sin(ha), Math.cos(ha)*Math.sin(lat) - Math.tan(dec)*Math.cos(lat)) + Math.PI) % TAU + TAU) % TAU;
+  return {elev:elev, az:az};
+}
+
+function projectCel(elev, az){
+  var reldir = Math.sin(az - Math.PI);
+  var x = cw*0.5 + reldir*cw*0.42;
+  var y = ch*0.60 - Math.tan(elev)*cw*0.46;
+  return {x:x, y:y, visible: reldir > -1.15 && reldir < 1.15};
+}
+
+function sunState(now){
+  var so = solar(now);
+  var day = smooth(-0.12, 0.08, so.elev);
+  var golden = clamp(smooth(0.30, 0.02, so.elev) - smooth(0.02, -0.28, so.elev), 0, 1)*0.9;
+  return {sun:projectCel(so.elev, so.az), elev:so.elev, az:so.az, day:day, golden:golden};
+}
+
+function applyMode(){
+  var st = sunState(new Date());
+  var d=st.day, cl=W.clouds, r=W.rain, so=W.snow, w=W.wind, fg=W.fog;
+  if(mode==='day'){ d=1; cl=0.22; r=0; so=0; w=12; fg=0; }
+  else if(mode==='night'){ d=0; cl=0.18; r=0; so=0; w=8; fg=0; }
+  else if(mode==='dusk'){ d=0.5; cl=0.3; r=0; so=0; w=8; fg=0.1; }
+  else if(mode==='rain'){ d=0.72; cl=0.97; r=0.8; so=0; w=34; fg=0.15; }
+  else if(mode==='snow'){ d=0.5; cl=0.88; r=0; so=0.85; w=18; fg=0.25; }
+  else if(mode==='storm'){ d=0.35; cl=1; r=0.95; so=0; w=62; fg=0.2; }
+  else if(mode==='wind'){ d=0.78; cl=0.5; r=0; so=0; w=72; fg=0; }
+  st.day=d; st.clouds=cl; st.rain=r; st.snow=so; st.wind=w; st.fog=fg;
+  return st;
+}
+
+var windows = [];
+function buildWindows(){
+  windows = [];
+  var wallL = 0.26*cw, wallR = 0.74*cw;
+  var cols = 12, rows = 4;
+  var gap = (wallR-wallL)/cols;
+  var ww = gap*0.42, wh = 0.031*ch;
+  var rowYs = [0.282,0.334,0.386,0.438];
+  for(var r=0;r<rows;r++){
+    for(var c=0;c<cols;c++){
+      var x = wallL + c*gap + (gap-ww)/2;
+      windows.push({x:x, y:rowYs[r]*ch - wh/2, w:ww, h:wh, on: rnd(c*31.7+r*17.3) > 0.45, pass: rnd(c+r*5.3), lit: Math.random() < 0.3, ch: 3+Math.random()*14});
+    }
+  }
+  var wingRects = [[0,0.26*cw],[0.74*cw,cw]];
+  var wingRows = [0.30,0.34,0.38,0.42];
+  var whW = 0.028*ch;
+  for(var wn=0;wn<2;wn++){
+    var x0=wingRects[wn][0], x1=wingRects[wn][1];
+    var wc=8, wg=(x1-x0)/wc, wwW=wg*0.42;
+    for(var c=0;c<wc;c++){
+      for(var r=0;r<4;r++){
+        var x = x0 + c*wg + (wg-wwW)/2;
+        windows.push({x:x, y:wingRows[r]*ch - whW/2, w:wwW, h:whW, on:true, pass:rnd(c*3.1+r*7.7), lit: Math.random() < 0.3, ch: 3+Math.random()*14});
+      }
+    }
+  }
+}
+
+var DAY_SKY_TOP=[64,150,226], DAY_SKY_MID=[130,196,242], DAY_SKY_LOW=[205,232,250];
+var OVC_SKY_TOP=[102,112,130], OVC_SKY_MID=[135,146,162], OVC_SKY_LOW=[176,188,200];
+var NIT_SKY_TOP=[5,11,26], NIT_SKY_MID=[16,30,60], NIT_SKY_LOW=[40,62,96];
+var DUSK_TOP=[255,122,74], DUSK_MID=[255,168,110], DUSK_LOW=[255,214,170];
+var WALL=[250,247,238], WALL_SH=[224,218,204], TRIM=[244,241,232];
+var ROOF=[66,78,100], ROOF_D=[50,60,80], SHUT=[56,78,96];
+var NAVY=[30,44,66];
+var GLASS_DAY=[150,190,226], GLASS_DRK=[104,130,160];
+var LAMP=[255,213,138], LAMP_GLOW=[255,190,90];
+var TREE=[70,128,84], TREE_D=[45,92,60], TREE_L=[98,156,104], PINE=[52,96,70];
+
+var raindrops=[], snowflakes=[], leaves=[];
+var stars=[];
+(function(){
+  for(var i=0;i<140;i++){ stars.push({x:Math.random(), y:Math.random()*0.5, r:Math.random()*1.3+0.4, p:Math.random()*TAU}); }
+})();
+var cloudsL=[];
+(function(){
+  for(var i=0;i<6;i++){ cloudsL.push({x:Math.random(), y:0.04+Math.random()*0.28, s:0.7+Math.random()*1.6, o:0.5+Math.random()*0.5}); }
+})();
+
+var curLitAmt = 0.18;
+function updateWindows(dt){
+  var p = clamp(curLitAmt*0.92, 0.05, 0.98);
+  for(var i=0;i<windows.length;i++){
+    var wp = windows[i];
+    if(simT < wp.ch) continue;
+    wp.lit = Math.random() < p;
+    wp.ch = simT + (wp.lit ? 20+Math.random()*45 : 8+Math.random()*24);
+  }
+}
+function mgmtParticles(){
+  var targetRain = clamp(S.rain,0,1)*cw*0.5;
+  while(raindrops.length < targetRain && raindrops.length<900){
+    raindrops.push({x:Math.random()*cw, y:Math.random()*ch, sp:cw*0.02*(0.75+Math.random()*0.6), l:ch*0.03*(0.6+Math.random()*0.5)});
+  }
+  if(raindrops.length > targetRain) raindrops.length = Math.floor(targetRain);
+  var targetSnow = clamp(S.snow,0,1)*cw*0.35;
+  while(snowflakes.length < targetSnow && snowflakes.length<700){
+    snowflakes.push({x:Math.random()*cw, y:Math.random()*ch, r:1.2+Math.random()*2.6*(0.6+S.snow), vy:cw*0.006*(0.5+Math.random()*0.7), p:Math.random()*TAU});
+  }
+  if(snowflakes.length > targetSnow) snowflakes.length = Math.floor(targetSnow);
+}
+
+function spawnLeaves(dt){
+  var rate = clamp((S.wind-22)/55,0,1);
+  if(leaves.length<60 && Math.random() < rate*dt*30){
+    var fromLeft = Math.random()<0.5;
+    var spd = cw*(0.25+Math.random()*0.35)*(0.5+S.wind*0.012);
+    leaves.push({x:fromLeft?-30:cw+30, y:0.1*ch+Math.random()*0.5*ch, vx:(fromLeft?1:-1)*spd, vy:cw*0.012*(2+Math.random()*3), rot:Math.random()*TAU, vr:(fromLeft?1:-1)*(0.15+Math.random()*0.4)});
+  }
+}
+
+function drawSky(st){
+  var c=st.clouds, day=st.day, golden=st.golden;
+  var ovc = smooth(0,0.35,c);
+  var skyTop = mixc(mixc(DAY_SKY_TOP, OVC_SKY_TOP, ovc), NIT_SKY_TOP, 1-day);
+  var skyMid = mixc(mixc(DAY_SKY_MID, OVC_SKY_MID, ovc), NIT_SKY_MID, 1-day);
+  var skyLow = mixc(mixc(DAY_SKY_LOW, OVC_SKY_LOW, ovc), NIT_SKY_LOW, 1-day);
+  skyTop = mixc(skyTop, DUSK_TOP, golden*(1-day*0.2));
+  skyMid = mixc(skyMid, DUSK_MID, golden*0.7);
+  skyLow = mixc(skyLow, DUSK_LOW, golden*0.55);
+  var g = ctx.createLinearGradient(0,0,0,ch*0.66);
+  g.addColorStop(0, cstr(skyTop));
+  g.addColorStop(0.45, cstr(skyMid));
+  g.addColorStop(1, cstr(skyLow));
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,cw,ch*0.66);
+
+  if(st.sun.visible){
+    var gc = ctx.createRadialGradient(st.sun.x, st.sun.y, 0, st.sun.x, st.sun.y, cw*0.34);
+    var glowCol = day>0.5 ? [255,225,150] : (day>0.2 ? [255,170,110] : [180,200,255]);
+    gc.addColorStop(0, cstr(glowCol, 0.35*day*golden + (1-day)*0.12));
+    gc.addColorStop(1, cstr(glowCol, 0));
+    ctx.fillStyle = gc;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    ctx.fillRect(0,0,cw,ch*0.7);
+    ctx.restore();
+  }
+
+  if(day < 0.4){
+    var sa = smooth(0.35,0.05,day);
+    ctx.fillStyle = '#cfe0ff';
+    for(var i=0;i<stars.length;i++){
+      var tw = 0.5+0.5*Math.sin(simT*2+stars[i].p);
+      ctx.globalAlpha = sa*(0.35+0.65*tw);
+      ctx.fillRect(stars[i].x*cw, stars[i].y*ch, stars[i].r, stars[i].r);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  if(day < 0.3){
+    var moon = projectCel(-st.elev/2 + 0.28, st.az + Math.PI);
+    if(moon.visible && moon.y < ch*0.6){
+      ctx.save();
+      ctx.globalAlpha = smooth(0.3,0.12,day);
+      var mg = ctx.createRadialGradient(moon.x,moon.y,0,moon.x,moon.y,cw*0.16);
+      mg.addColorStop(0,cstr([205,220,245],0.3));
+      mg.addColorStop(1,cstr([205,220,245],0));
+      ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(moon.x,moon.y,cw*0.16,0,TAU); ctx.fill();
+      ctx.fillStyle = cstr([235,242,252],0.95);
+      ctx.beginPath(); ctx.arc(moon.x,moon.y,cw*0.028,0,TAU); ctx.fill();
+      ctx.fillStyle = cstr([200,212,232],0.85);
+      ctx.beginPath();
+      ctx.arc(moon.x-cw*0.009,moon.y-cw*0.006,cw*0.006,0,TAU);
+      ctx.arc(moon.x+cw*0.010,moon.y+cw*0.008,cw*0.004,0,TAU);
+      ctx.arc(moon.x,moon.y+cw*0.012,cw*0.005,0,TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  if(st.sun.visible && st.elev > -0.05 && st.sun.y < ch*0.62){
+    ctx.save();
+    ctx.globalAlpha = smooth(0,0.06,st.elev);
+    ctx.fillStyle = cstr([255,244,200],1);
+    ctx.beginPath(); ctx.arc(st.sun.x, st.sun.y, cw*0.025*(1-st.day*0.25),0,TAU); ctx.fill();
+    ctx.globalCompositeOperation='lighter';
+    ctx.fillStyle = cstr([255,216,120],0.5);
+    ctx.beginPath(); ctx.arc(st.sun.x, st.sun.y, cw*0.068,0,TAU); ctx.fill();
+    ctx.restore();
+  }
+  drawClouds(st);
+  if(st.fog>0.02) drawFog(st);
+}
+
+function drawClouds(st){
+  var day = st.day, wind = S.wind;
+  var cdt = clamp(simT - cldT, 0, 0.12);
+  cldT = simT;
+  var baseCol = mixc([255,255,255], [92,102,118], clamp(st.clouds*1.2,0,1));
+  var col = mixc(baseCol, [16,26,48], 1-day);
+  col = mixc(col, [255,190,140], st.golden*0.5);
+  for(var i=0;i<cloudsL.length;i++){
+    var cl = cloudsL[i];
+    var pxPerSec = (8 + wind*0.9)*(0.65 + 0.5*(1-cl.s));
+    cl.x += (pxPerSec/cw)*cdt;
+    if(cl.x > 1.4) cl.x = -0.45;
+    if(cl.x < -0.5) cl.x = 1.35;
+    var cx = cl.x*cw, cy = cl.y*ch;
+    var w = cl.s*cw*0.16, h = cl.s*ch*0.045;
+    ctx.save();
+    ctx.globalAlpha = cl.o*(0.5+0.5*cl.s)*(0.55+0.45*(1-st.clouds*0.3));
+    ctx.fillStyle = cstr(col,0.85);
+    pCloud(cx,cy,w,h);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+function pCloud(cx,cy,w,h){
+  ctx.beginPath();
+  ctx.arc(cx-w*0.22, cy, h*0.7, 0, TAU);
+  ctx.arc(cx, cy-h*0.25, h*0.95, 0, TAU);
+  ctx.arc(cx+w*0.22, cy, h*0.7, 0, TAU);
+  ctx.arc(cx+w*0.42, cy+h*0.05, h*0.55, 0, TAU);
+  ctx.arc(cx-w*0.42, cy+h*0.06, h*0.5, 0, TAU);
+  ctx.moveTo(cx-w*0.5,cy);
+  ctx.lineTo(cx-w*0.5,cy+h*0.35); ctx.lineTo(cx+w*0.5,cy+h*0.35); ctx.lineTo(cx+w*0.5,cy);
+  ctx.closePath();
+}
+function drawFog(st){
+  var g = ctx.createLinearGradient(0,ch*0.42,0,ch*0.78);
+  var col = mixc([226,232,238],[40,52,78],1-st.day);
+  g.addColorStop(0, cstr(col,0));
+  g.addColorStop(1, cstr(col,0.55));
+  ctx.fillStyle=g;
+  ctx.fillRect(0,ch*0.42,cw,ch*0.36);
+}
+
+function drawShore(st){
+  var day = st.day;
+  var grass = mixc([96,140,96],[14,24,40],1-day);
+  var sand = mixc([186,170,140],[24,30,44],1-day);
+  ctx.fillStyle = cstr(grass,1);
+  ctx.fillRect(0, ch*0.505, cw, ch*0.085);
+  ctx.fillStyle = cstr(sand,1);
+  ctx.fillRect(0, ch*0.588, cw, ch*0.015);
+  var far = mixc([120,166,120],[26,40,62],1-day);
+  ctx.fillStyle = cstr(far,1);
+  silhouetteRow(ch*0.50, ch*0.535, 26, 0, cw);
+}
+function silhouetteRow(base, top, n, x0, x1){
+  var seg=(x1-x0)/n;
+  ctx.beginPath();
+  ctx.moveTo(x0,base);
+  for(var i=0;i<=n;i++){
+    var x=x0+i*seg;
+    var h=top+rnd(i*13.7)*(base-top)*0.35;
+    ctx.lineTo(x, h);
+    ctx.quadraticCurveTo(x+seg*0.5, h-(base-top)*0.4, x+seg, h+rnd(i*7.1)*(base-top)*0.3);
+  }
+  ctx.lineTo(x1,base);
+  ctx.closePath();
+}
+function drawTree(cx, base, s, sway, day){
+  var sw = Math.sin(simT*1.4 + cx*0.01)*sway;
+  var bark = mixc([96,72,56],[24,18,16],1-day);
+  var top = base - s*0.8;
+  ctx.strokeStyle = cstr(bark,1);
+  ctx.lineWidth = Math.max(2, s*0.06);
+  ctx.beginPath();
+  ctx.moveTo(cx, base);
+  ctx.lineTo(cx+sw, top + s*0.25);
+  ctx.stroke();
+  var blob = mixc(TREE,[20,34,54],1-day*0.85);
+  var blobL = mixc(TREE_L,[26,40,60],1-day*0.85);
+  var sh = mixc(TREE_D,[14,24,40],1-day*0.85);
+  ctx.save();
+  ctx.translate(cx+sw, top);
+  var r0 = s*0.30, r1 = s*0.24;
+  ctx.fillStyle = cstr(sh,1);
+  ctx.beginPath(); ctx.arc(-r0*0.6, r0*0.25, r0*0.9,0,TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(r0*0.6, r0*0.3, r0*0.8,0,TAU); ctx.fill();
+  ctx.fillStyle = cstr(blob,1);
+  ctx.beginPath();
+  ctx.arc(-r0*0.5, -r0*0.15, r0,0,TAU);
+  ctx.arc(r0*0.5,-r0*0.1,r1,0,TAU);
+  ctx.arc(0,-r0*0.45,r1*1.15,0,TAU);
+  ctx.fill();
+  ctx.fillStyle = cstr(blobL,0.8);
+  ctx.beginPath(); ctx.arc(-r0*0.25,-r0*0.4, r1*0.5,0,TAU); ctx.fill();
+  ctx.restore();
+}
+function drawPine(cx,base,s,sway,day){
+  var sw = Math.sin(simT*1.2+cx)*sway;
+  ctx.fillStyle = cstr(mixc([72,52,40],[20,16,18],1-day),1);
+  ctx.fillRect(cx-s*0.04, base-s*0.4, s*0.08, s*0.4);
+  var col = mixc(PINE,[18,30,46],1-day);
+  ctx.fillStyle = cstr(col,1);
+  for(var i=0;i<4;i++){
+    var y = base - s*(0.25 + i*0.2);
+    var w = s*(0.34 - i*0.05);
+    var off = sw*(0.3 + 0.25*i);
+    ctx.beginPath();
+    ctx.moveTo(cx - w + off, y);
+    ctx.lineTo(cx + off, y - s*0.18);
+    ctx.lineTo(cx + w + off, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawStar(cx,cy,r){
+  ctx.beginPath();
+  for(var i=0;i<10;i++){
+    var ang = -Math.PI/2 + i*Math.PI/5;
+    var rad = (i%2===0) ? r : r*0.4;
+    var px = cx + Math.cos(ang)*rad, py = cy + Math.sin(ang)*rad;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+function drawUsFlag(x,y,w,wind,ph){
+  var h = w/1.9;
+  var RED = '#b22234', BLUE = '#3c3b6e', WHITE = '#ffffff';
+  var amp = h*0.16*(0.45 + Math.min(1, wind/80));
+  var cols = 16;
+  function wob(xx, yy){
+    var t = clamp((xx-x)/w, 0, 1);
+    return yy + Math.sin((xx-x)*0.06 + ph)*amp*t;
+  }
+  var stripes = 13, sh = h/stripes;
+  for(var i=0;i<stripes;i++){
+    var y0 = y + i*sh, y1 = y0 + sh;
+    ctx.fillStyle = (i%2===0) ? RED : WHITE;
+    ctx.beginPath();
+    ctx.moveTo(x, wob(x,y0));
+    for(var c=1;c<=cols;c++){ var xx = x + w*c/cols; ctx.lineTo(xx, wob(xx,y0)); }
+    ctx.lineTo(x+w, wob(x+w,y1));
+    for(c=cols;c>=1;c--){ var xx2 = x + w*c/cols; ctx.lineTo(xx2, wob(xx2,y1)); }
+    ctx.lineTo(x, wob(x,y1));
+    ctx.closePath();
+    ctx.fill();
+  }
+  var cw = w*0.4, chh = h*7/13;
+  ctx.fillStyle = BLUE;
+  ctx.beginPath();
+  ctx.moveTo(x, wob(x,y));
+  for(var c=1;c<=cols;c++){ var xx = x + cw*c/cols; ctx.lineTo(xx, wob(xx,y)); }
+  ctx.lineTo(x+cw, wob(x+cw,y+chh));
+  for(c=cols;c>=1;c--){ var xx2 = x + cw*c/cols; ctx.lineTo(xx2, wob(xx2,y+chh)); }
+  ctx.lineTo(x, wob(x,y+chh));
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  for(var row=0;row<9;row++){
+    var n = (row%2===0)?6:5;
+    var off = (6-n)/2;
+    for(var s=0;s<n;s++){
+      var sX = x + cw*(s + off + 0.5)/6;
+      var sY = wob(sX, y + chh*(row + 0.5)/9);
+      drawStar(sX, sY, h*0.022);
+    }
+  }
+}
+
+function drawWater(st){
+  var day = st.day;
+  var hor = ch*0.60;
+  var wTop = mixc(mixc([90,160,198],[168,206,224],0.35), [14,26,48], 1-day);
+  var wBot = mixc(mixc([44,110,160],[30,84,132],0.5), [6,12,26], 1-day);
+  wTop = mixc(wTop,[80,92,112],clamp(S.clouds*0.8,0,1)*0.45);
+  wBot = mixc(wBot,[48,58,76],clamp(S.clouds*0.8,0,1)*0.4);
+  var g = ctx.createLinearGradient(0,hor,0,ch);
+  g.addColorStop(0,cstr(wTop));
+  g.addColorStop(1,cstr(wBot));
+  ctx.fillStyle=g;
+  ctx.fillRect(0,hor,cw,ch-hor);
+
+  var rg = ctx.createLinearGradient(0,hor,0,ch);
+  var skyRef = mixc([205,232,250],[40,62,96],1-day);
+  rg.addColorStop(0, cstr(skyRef, 0.5));
+  rg.addColorStop(1, cstr(skyRef, 0.18));
+  ctx.fillStyle=rg;
+  ctx.fillRect(0,hor,cw,ch-hor);
+
+  if(st.sun.visible && st.day>0.05){
+    for(var i=0;i<7;i++){
+      var fy = hor + (ch-hor)*i/7;
+      var span = cw*(0.02 + 0.10*i/7)*(0.5+st.day);
+      ctx.fillStyle = cstr([255,224,150], 0.5 - 0.06*i);
+      ctx.fillRect(st.sun.x-span/2, fy, span, 1.8+2.2*i/7);
+    }
+  }
+
+  var chop = 0.5 + clamp(S.wind/40,0,1)*1.6;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for(var r=0;r<12;r++){
+    var yy = hor + (ch-hor)*(r+1)/12;
+    var alpha = 0.10*(1-r/12*0.8)*(0.4+0.6*st.day);
+    if(day<0.25) alpha *= 0.5;
+    for(var cIdx=0;cIdx<30;cIdx++){
+      var bx = (cIdx + 0.5*Math.sin(simT*1.2 + r*1.7 + cIdx*0.8))*cw/30;
+      var wlen = cw/30*(0.6+0.5*chop);
+      var ph2 = Math.sin(simT*(1.2+chop*0.5) + cIdx*0.9 + r);
+      ctx.globalAlpha = alpha*clamp(ph2,0.25,1);
+      ctx.fillRect(bx-wlen/2, yy, wlen, 1.2+chop*0.7);
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  ctx.fillStyle = cstr(mixc([70,150,190],[10,20,40],1-day),1);
+  for(var i=0;i<3;i++){
+    var fx = ((simT*(0.04+chop*0.03)+i*0.33)%1.4-0.2)*cw;
+    var fy = ch*(0.78+i*0.06);
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, cw*0.2, ch*0.012, 0, 0, TAU);
+    ctx.fill();
+  }
+}
+
+function drawWindowReflections(day){
+  if(day>0.65) return;
+  var hor = ch*0.60;
+  var alphaRefl = (1-day)*0.5;
+  for(var i=0;i<windows.length;i++){
+    var wp=windows[i];
+    if(!wp.on) continue;
+    var gy = hor + (ch-hor)*(0.30 + rnd(i)*0.45);
+    var gh = (ch-hor)*0.22;
+    var gg = ctx.createLinearGradient(0,gy,0,gy+gh);
+    gg.addColorStop(0, cstr(LAMP_GLOW, alphaRefl*0.55));
+    gg.addColorStop(1, cstr(LAMP_GLOW,0));
+    ctx.fillStyle = gg;
+    ctx.fillRect(wp.x + wp.w*0.4, gy, wp.w*0.2, gh);
+  }
+}
+
+function drawWing(xl, xr, day){
+  var wb = mixc(WALL,[22,30,46],1-day);
+  var wsh = mixc(WALL_SH,[16,24,38],1-day);
+  var trim = mixc(TRIM,[24,32,46],1-day);
+  var roof = mixc(ROOF,[12,18,32],1-day);
+  var roofD = mixc(ROOF_D,[9,14,25],1-day);
+  var eaveW=0.228*ch, ridgeW=0.188*ch, base=0.50*ch;
+  ctx.fillStyle = cstr(wsh,1);
+  ctx.fillRect(xl, ridgeW, xr-xl, base-ridgeW);
+  var rg = ctx.createLinearGradient(0,ridgeW,0,eaveW);
+  rg.addColorStop(0,cstr(roof));
+  rg.addColorStop(1,cstr(roofD));
+  ctx.fillStyle = rg;
+  ctx.fillRect(xl, ridgeW, xr-xl, eaveW-ridgeW);
+  ctx.fillStyle = cstr(roofD,1);
+  ctx.fillRect(xl, eaveW-0.007*ch, xr-xl, 0.007*ch);
+  ctx.strokeStyle = cstr(mixc([136,148,176],[42,54,76],1-day),0.9);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(xl+0.02*cw, ridgeW); ctx.lineTo(xr-0.02*cw, ridgeW);
+  ctx.stroke();
+  ctx.fillStyle = cstr(wb,0.28);
+  ctx.fillRect(xl, eaveW, 0.02*cw, base-eaveW);
+  ctx.fillRect(xr-0.02*cw, eaveW, 0.02*cw, base-eaveW);
+  var qw = 0.009*cw;
+  ctx.fillStyle = cstr(trim,0.9);
+  for(var q=0;q<8;q++){
+    var qy = eaveW + (base-eaveW)*q/8;
+    ctx.fillRect(xl, qy, qw, (base-eaveW)/16+1);
+    ctx.fillRect(xr-qw, qy, qw, (base-eaveW)/16+1);
+  }
+  ctx.fillStyle = cstr(trim,0.85);
+  ctx.fillRect(xl, eaveW-0.008*ch, xr-xl, 0.010*ch);
+  var jx = Math.abs(xl-0.5*cw) < Math.abs(xr-0.5*cw) ? xl : xr;
+  drawGable(jx, 0.045*cw, ridgeW-0.005*ch, eaveW+0.004*ch, eaveW-0.034*ch, day);
+  for(var di=1;di<=4;di++){
+    drawDormer(xl + di*(xr-xl)/5, ridgeW, day);
+  }
+}
+
+function drawHotel(st){
+  var day = st.day;
+  var wb = mixc(WALL,[22,30,46],1-day);
+  var wsh = mixc(WALL_SH,[16,24,38],1-day);
+  var trim = mixc(TRIM,[24,32,46],1-day);
+  var roof = mixc(ROOF,[12,18,32],1-day);
+  var roofD = mixc(ROOF_D,[9,14,25],1-day);
+  var wallL=0.26*cw, wallR=0.74*cw;
+  var eave=0.214*ch, base=0.50*ch, ridgeY=0.156*ch;
+
+  ctx.save();
+
+  ctx.fillStyle = cstr(mixc([60,92,64],[6,10,18],1-day),0.55);
+  ctx.beginPath();
+  ctx.ellipse(cw*0.5, ch*0.556, 0.5*cw, 0.02*ch, 0, 0, TAU);
+  ctx.fill();
+
+  drawWing(0, 0.26*cw, day);
+  drawWing(0.74*cw, cw, day);
+
+  ctx.fillStyle = cstr(wsh,1);
+  ctx.fillRect(wallL, eave, wallR-wallL, base-eave);
+  ctx.fillStyle = cstr(wb,0.28);
+  ctx.fillRect(wallL, eave, 0.035*cw, base-eave);
+  ctx.fillRect(wallR-0.035*cw, eave, 0.035*cw, base-eave);
+  var qw = 0.011*cw;
+  ctx.fillStyle = cstr(trim,0.9);
+  for(var q=0;q<9;q++){
+    var qy = eave + (base-eave)*q/9;
+    ctx.fillRect(wallL, qy, qw, (base-eave)/18+1);
+    ctx.fillRect(wallR-qw, qy, qw, (base-eave)/18+1);
+  }
+  ctx.fillStyle = cstr(trim,0.85);
+  ctx.fillRect(wallL, eave-0.010*ch, wallR-wallL, 0.012*ch);
+  ctx.fillRect(wallL, 0.353*ch, wallR-wallL, 0.010*ch);
+
+  var rg = ctx.createLinearGradient(0, ridgeY, 0, eave);
+  rg.addColorStop(0, cstr(roof));
+  rg.addColorStop(1, cstr(roofD));
+  ctx.fillStyle = rg;
+  ctx.fillRect(wallL, ridgeY, wallR-wallL, eave-ridgeY);
+  ctx.fillStyle = cstr(roofD,1);
+  ctx.fillRect(wallL, eave-0.008*ch, wallR-wallL, 0.008*ch);
+
+  var cL=0.40*cw, cR=0.60*cw, cRidgeY = ridgeY - 0.032*ch;
+  ctx.fillStyle = cstr(roof,1);
+  ctx.fillRect(cL, cRidgeY, cR-cL, ridgeY-cRidgeY);
+  ctx.fillStyle = cstr(roofD,0.7);
+  ctx.fillRect(cL, cRidgeY, 0.016*cw, ridgeY-cRidgeY);
+  ctx.fillRect(cR-0.016*cw, cRidgeY, 0.016*cw, ridgeY-cRidgeY);
+  ctx.strokeStyle = cstr(mixc([136,148,176],[42,54,76],1-day),0.9);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(wallL+0.02*cw, ridgeY); ctx.lineTo(cL+0.015*cw, ridgeY);
+  ctx.moveTo(cR-0.015*cw, ridgeY); ctx.lineTo(wallR-0.02*cw, ridgeY);
+  ctx.moveTo(cL+0.015*cw, cRidgeY); ctx.lineTo(cR-0.015*cw, cRidgeY);
+  ctx.stroke();
+
+  drawGable(0.30*cw, 0.048*cw, eave-0.076*ch, eave+0.006*ch, eave-0.042*ch, day);
+  drawGable(0.70*cw, 0.048*cw, eave-0.076*ch, eave+0.006*ch, eave-0.042*ch, day);
+
+  drawDormer(0.352*cw, ridgeY, day);
+  drawDormer(0.420*cw, ridgeY, day);
+  drawDormer(0.580*cw, ridgeY, day);
+  drawDormer(0.648*cw, ridgeY, day);
+
+  var cupX=0.50*cw, cBase=cRidgeY;
+  var drumH=0.018*ch, drumW=0.052*cw;
+  ctx.fillStyle = cstr(trim,1);
+  ctx.fillRect(cupX-drumW/2, cBase-drumH, drumW, drumH);
+  ctx.fillStyle = cstr(mixc(SHUT,[10,16,28],1-day),1);
+  for(var a=-1;a<=1;a++){
+    var wxA = cupX + a*drumW*0.24;
+    ctx.fillRect(wxA-drumW*0.06, cBase-drumH*0.74, drumW*0.12, drumH*0.64);
+  }
+  var bellBase = cBase - drumH;
+  ctx.fillStyle = cstr(roof,1);
+  ctx.beginPath();
+  ctx.moveTo(cupX-drumW*0.5, bellBase);
+  ctx.quadraticCurveTo(cupX-drumW*0.16, bellBase-0.026*ch, cupX, bellBase-0.044*ch);
+  ctx.quadraticCurveTo(cupX+drumW*0.16, bellBase-0.026*ch, cupX+drumW*0.5, bellBase);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = cstr(trim,0.75);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cupX-drumW*0.13, bellBase-0.008*ch);
+  ctx.quadraticCurveTo(cupX, bellBase-0.030*ch, cupX+drumW*0.13, bellBase-0.008*ch);
+  ctx.stroke();
+  var tipTop = bellBase-0.044*ch;
+  ctx.strokeStyle = cstr(mixc([92,92,92],[22,22,28],1-day),1);
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cupX, tipTop); ctx.lineTo(cupX, tipTop-0.030*ch); ctx.stroke();
+  ctx.fillStyle = cstr(LAMP,1);
+  ctx.beginPath(); ctx.arc(cupX, tipTop-0.033*ch, 2.2,0,TAU); ctx.fill();
+  drawUsFlag(cupX+1.5, tipTop-0.027*ch, 0.033*cw, S.wind, simT*2.4+2.1);
+
+  for(var i=0;i<windows.length;i++){
+    var wp = windows[i];
+    var lit = wp.lit;
+    drawWindow(wp.x, wp.y, wp.w, wp.h, lit, day);
+  }
+
+  ctx.fillStyle = cstr(mixc(NAVY,[22,28,46],1-day),1);
+  ctx.font = '600 '+Math.max(10,ch*0.015)+'px Poppins, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('NEWPORT BAY CLUB', cw*0.5, ch*0.465);
+
+  var pTop = 0.492*ch, pBot = 0.545*ch;
+  ctx.fillStyle = cstr(mixc(TRIM,[24,32,46],1-day),0.85);
+  ctx.fillRect(wallL+0.02*cw, pTop, wallR-wallL-0.04*cw, pBot-pTop);
+  ctx.lineWidth = 1;
+  var colN = 10, colStep = (wallR-wallL)/colN;
+  for(var ci=0;ci<colN;ci++){
+    var cx = wallL + ci*colStep + colStep/2;
+    ctx.fillStyle = cstr(mixc([238,234,224],[28,36,50],1-day),1);
+    ctx.fillRect(cx-0.007*cw, pTop+0.006*ch, 0.014*cw, pBot-pTop-0.010*ch);
+  }
+  ctx.strokeStyle = cstr(mixc([150,146,134],[48,52,62],1-day),1);
+  ctx.beginPath();
+  ctx.moveTo(wallL+0.022*cw, pBot-0.016*ch); ctx.lineTo(wallR-0.022*cw, pBot-0.016*ch);
+  ctx.moveTo(wallL+0.022*cw, pBot-0.030*ch); ctx.lineTo(wallR-0.022*cw, pBot-0.030*ch);
+  ctx.stroke();
+  ctx.fillStyle = cstr(mixc([220,214,202],[34,40,52],1-day),1);
+  for(var sti=0;sti<3;sti++){
+    var sy = pBot + sti*0.012*ch;
+    var swx = 0.10*cw - 2*sti*0.012*cw;
+    ctx.fillRect(cw*0.5-swx/2, sy, swx, 0.012*ch);
+  }
+  ctx.fillStyle = cstr([178,50,44],1);
+  ctx.fillRect(cw*0.5-0.048*cw, pTop-0.014*ch, 0.096*cw, 0.014*ch);
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillRect(cw*0.5-0.048*cw, pTop-0.014*ch, 0.096*cw, 0.006*ch);
+  if(day<0.55){
+    ctx.fillStyle = cstr(LAMP,0.9);
+    ctx.beginPath(); ctx.arc(cw*0.5-0.07*cw, pTop+0.01*ch, ch*0.012,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(cw*0.5+0.07*cw, pTop+0.01*ch, ch*0.012,0,TAU); ctx.fill();
+  }
+
+  var ph = simT*2.4;
+  var gpY = eave-0.076*ch;
+  ctx.strokeStyle = cstr(mixc([90,90,90],[26,26,30],1-day),1);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0.30*cw, gpY); ctx.lineTo(0.30*cw, gpY-0.028*ch);
+  ctx.moveTo(0.70*cw, gpY); ctx.lineTo(0.70*cw, gpY-0.028*ch);
+  ctx.stroke();
+  drawUsFlag(0.30*cw+1.5, gpY-0.027*ch, 0.038*cw, S.wind, ph);
+  drawUsFlag(0.70*cw+1.5, gpY-0.027*ch, 0.038*cw, S.wind, ph+1.3);
+
+  ctx.restore();
+}
+function drawGable(cx, half, peakY, baseY, oy, day){
+  var roof = mixc(ROOF,[12,18,32],1-day);
+  var trim = mixc(TRIM,[24,32,46],1-day);
+  ctx.fillStyle = cstr(roof,1);
+  ctx.beginPath();
+  ctx.moveTo(cx-half, baseY);
+  ctx.lineTo(cx+half, baseY);
+  ctx.lineTo(cx, peakY);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = cstr(trim,0.95);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = cstr(mixc(NAVY,[30,38,52],1-day),1);
+  ctx.beginPath(); ctx.arc(cx, oy, 0.0105*cw, 0, TAU); ctx.fill();
+  ctx.strokeStyle = cstr(trim,0.9);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, oy, 0.0105*cw, 0, TAU); ctx.stroke();
+}
+function drawDormer(cx, ridgeY, day){
+  var roof = mixc(ROOF,[12,18,32],1-day);
+  var trim = mixc(TRIM,[24,32,46],1-day);
+  var w=0.022*cw, h=0.034*ch;
+  ctx.fillStyle = cstr(roof,1);
+  ctx.beginPath();
+  ctx.moveTo(cx-w,ridgeY); ctx.lineTo(cx,ridgeY-h); ctx.lineTo(cx+w,ridgeY); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = cstr(trim,0.8);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = cstr(trim,0.9);
+  ctx.fillRect(cx-w*0.45, ridgeY-h*0.42, w*0.9, h*0.42);
+  ctx.fillStyle = cstr(mixc(NAVY,[30,38,52],1-day),1);
+  ctx.fillRect(cx-w*0.3, ridgeY-h*0.34, w*0.6, h*0.28);
+}
+function drawWindow(x,y,w,h,lit,day){
+  var frame = mixc(TRIM,[28,36,50],1-day);
+  var shut = mixc(SHUT,[10,16,28],1-day);
+  var sw2 = w*0.24;
+  ctx.fillStyle = cstr(shut,1);
+  ctx.fillRect(x-sw2, y-h*0.04, sw2, h*1.08);
+  ctx.fillRect(x+w, y-h*0.04, sw2, h*1.08);
+  ctx.fillStyle = cstr(frame,1);
+  ctx.fillRect(x, y, w, h);
+  if(lit){
+    ctx.fillStyle = cstr(LAMP,1);
+    ctx.fillRect(x+w*0.08, y+h*0.08, w*0.84, h*0.84);
+    ctx.fillStyle = cstr(LAMP_GLOW,0.3);
+    ctx.fillRect(x-w*0.16, y-h*0.16, w*1.32, h*1.32);
+  } else {
+    var gl = mixc(GLASS_DAY, GLASS_DRK, 1-day);
+    ctx.fillStyle = cstr(gl,1);
+    ctx.fillRect(x+w*0.08, y+h*0.08, w*0.84, h*0.84);
+  }
+  ctx.strokeStyle = cstr(mixc([150,146,134],[30,36,50],1-day),1);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, w, h);
+  ctx.beginPath();
+  ctx.moveTo(x+w/2, y); ctx.lineTo(x+w/2, y+h);
+  ctx.moveTo(x, y+h/2); ctx.lineTo(x+w, y+h/2);
+  ctx.stroke();
+}
+
+function drawLighthouse(st){
+  var day = st.day;
+  var x = 0.150*cw, base = 0.60*ch, top = 0.315*ch;
+  var wB = mixc([200,196,188],[26,34,50],1-day);
+  var rB = mixc([202,60,55],[70,22,22],1-day);
+
+  ctx.fillStyle = cstr(mixc([130,138,142],[16,22,34],1-day),1);
+  ctx.beginPath();
+  ctx.moveTo(x-0.03*cw, base);
+  ctx.lineTo(x+0.05*cw, base);
+  ctx.lineTo(x+0.04*cw, base+0.08*ch);
+  ctx.lineTo(x-0.02*cw, base+0.08*ch);
+  ctx.closePath(); ctx.fill();
+  for(var i=0;i<4;i++){
+    ctx.fillStyle = cstr(mixc([112,120,126],[12,18,28],1-day),1);
+    ctx.beginPath(); ctx.ellipse(x-0.02*cw+i*0.018*cw, base+0.03*ch, 0.012*cw, 0.008*ch,0,0,TAU); ctx.fill();
+  }
+
+  var tw = 0.020*cw;
+  var bandH = (base-top)/7;
+  for(var b=0;b<7;b++){
+    ctx.fillStyle = cstr(b%2===0 ? wB : rB, 1);
+    ctx.fillRect(x-tw/2, top+b*bandH, tw, bandH+1);
+  }
+  ctx.fillStyle = cstr(mixc([120,124,128],[18,24,34],1-day),1);
+  ctx.fillRect(x-tw*0.55, top-0.035*ch, tw*1.1, 0.045*ch);
+  ctx.strokeStyle = cstr(mixc([70,74,80],[10,14,22],1-day),1);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x-tw*0.9, top-0.045*ch); ctx.lineTo(x+tw*0.9, top-0.045*ch);
+  ctx.stroke();
+  var gl = day<0.55 ? LAMP : mixc([160,190,220],[40,60,90],1-day);
+  ctx.fillStyle = cstr(mixc([90,98,108],[16,22,32],1-day),1);
+  ctx.fillRect(x-tw*0.45, top-0.085*ch, tw*0.9, 0.05*ch);
+  ctx.fillStyle = cstr(mixc(gl,[255,214,140], day<0.55?0.55:0), 0.98);
+  ctx.fillRect(x-tw*0.38, top-0.078*ch, tw*0.76, 0.036*ch);
+  ctx.fillStyle = cstr(rB,1);
+  ctx.beginPath();
+  ctx.moveTo(x-tw*0.55, top-0.082*ch);
+  ctx.lineTo(x+tw*0.55, top-0.082*ch);
+  ctx.lineTo(x, top-0.135*ch);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = cstr([235,190,70],1);
+  ctx.beginPath(); ctx.arc(x, top-0.135*ch, 0.004*cw,0,TAU); ctx.fill();
+
+  if(day<0.55){
+    var ang = Math.sin(simT*0.55)*1.5 - 0.4;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(x, top-0.06*ch);
+    ctx.rotate(ang);
+    var bgr = ctx.createLinearGradient(0,0,cw*0.8,0);
+    bgr.addColorStop(0, cstr([255,226,150],0.55));
+    bgr.addColorStop(1, cstr([255,226,150],0));
+    ctx.fillStyle = bgr;
+    ctx.beginPath();
+    ctx.moveTo(0,-0.02*ch); ctx.lineTo(cw*0.6, -cw*0.05); ctx.lineTo(cw*0.6, cw*0.05); ctx.lineTo(0,0.02*ch);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawPierBoat(st){
+  var day = st.day;
+  var wob = Math.sin(simT*1.1)*(0.15 + S.wind/60);
+  var bob = Math.sin(simT*1.3)*0.006*ch*(1+S.wind/40);
+
+  var mx=0.96*cw, my=ch*1.02, ex=0.78*cw, ey=0.80*ch;
+  ctx.strokeStyle = cstr(mixc([110,84,64],[20,16,16],1-day),1);
+  ctx.lineWidth = 0.028*cw;
+  ctx.beginPath(); ctx.moveTo(mx,my); ctx.lineTo(ex,ey); ctx.stroke();
+  ctx.strokeStyle = cstr(mixc([90,70,54],[14,12,14],1-day),1);
+  for(var i=0;i<=8;i++){
+    var t = i/8;
+    var px = lerp(ex,mx,t), py = lerp(ey,my,t);
+    ctx.lineWidth = 0.012*cw*(0.5+0.5*t);
+    ctx.beginPath(); ctx.moveTo(px+0.012*cw, py+0.004*cw); ctx.lineTo(px-0.012*cw, py-0.004*cw); ctx.stroke();
+  }
+  ctx.fillStyle = cstr(mixc([80,64,50],[12,12,14],1-day),1);
+  ctx.beginPath();
+  ctx.moveTo(ex,ey); ctx.lineTo(ex+0.03*cw,ey+0.01*ch);
+  ctx.lineTo(ex+0.02*cw,ey+0.05*ch); ctx.lineTo(ex-0.01*cw,ey+0.05*ch);
+  ctx.closePath(); ctx.fill();
+
+  var bx=0.66*cw, by=0.72*ch + bob;
+  var hull = mixc([245,240,230],[30,38,52],1-day);
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(wob*0.4);
+  ctx.fillStyle = cstr(hull,1);
+  ctx.beginPath();
+  ctx.moveTo(-0.07*cw, 0);
+  ctx.quadraticCurveTo(-0.02*cw, 0.02*ch, 0.07*cw, 0);
+  ctx.quadraticCurveTo(0.04*cw, 0.012*ch, -0.04*cw, 0.012*ch);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = cstr([196,52,48],1);
+  ctx.fillRect(-0.008*cw, -0.006*ch, 0.016*cw, 0.006*ch);
+  ctx.strokeStyle = cstr(mixc([60,60,64],[150,158,170],1-day),1);
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-0.01*cw,0); ctx.lineTo(-0.01*cw,-0.14*ch); ctx.stroke();
+  var sail = mixc([247,242,232],[40,50,70],1-day);
+  ctx.fillStyle = cstr(sail,1);
+  ctx.beginPath();
+  ctx.moveTo(-0.009*cw,-0.135*ch); ctx.lineTo(0.03*cw,-0.02*ch); ctx.lineTo(-0.006*cw,-0.02*ch);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = cstr(mixc([70,110,190],[18,28,52],1-day),1);
+  ctx.beginPath();
+  ctx.moveTo(-0.011*cw,-0.135*ch); ctx.lineTo(-0.05*cw,-0.02*ch); ctx.lineTo(-0.009*cw,-0.02*ch);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  if(day<0.55){
+    ctx.fillStyle = cstr(LAMP,0.9);
+    ctx.beginPath(); ctx.arc(bx-0.01*cw, by-0.135*ch, 0.004*cw,0,TAU); ctx.fill();
+  }
+  ctx.fillStyle = cstr(mixc([245,240,230],[20,28,42],1-day),0.28);
+  ctx.beginPath(); ctx.ellipse(bx, by+0.012*ch, 0.06*cw, 0.012*ch*0.6,0,0,TAU); ctx.fill();
+}
+
+function drawLamps(st){
+  var day = st.day;
+  var xs = [0.36*cw, 0.64*cw];
+  for(var i=0;i<xs.length;i++){
+    var x = xs[i], base = 0.592*ch;
+    var sway = Math.sin(simT*1.6+i)*S.wind/70*0.01*ch;
+    ctx.strokeStyle = cstr(mixc([40,44,52],[10,12,18],1-day),1);
+    ctx.lineWidth = Math.max(2,0.005*cw);
+    ctx.beginPath();
+    ctx.moveTo(x, base); ctx.lineTo(x+sway, base-0.09*ch);
+    ctx.moveTo(x+sway, base-0.09*ch); ctx.lineTo(x+sway+0.012*cw, base-0.115*ch);
+    ctx.stroke();
+    if(day<0.6){
+      var lg = ctx.createRadialGradient(x+sway+0.012*cw, base-0.115*ch, 0, x+sway+0.012*cw, base-0.115*ch, 0.05*cw);
+      lg.addColorStop(0, cstr(LAMP_GLOW,0.85));
+      lg.addColorStop(1, cstr(LAMP_GLOW,0));
+      ctx.fillStyle = lg;
+      ctx.beginPath(); ctx.arc(x+sway+0.012*cw, base-0.115*ch, 0.05*cw,0,TAU); ctx.fill();
+    }
+  }
+}
+
+function drawRain(){
+  if(S.rain<0.02) return;
+  var ang = clamp((S.wind-5)/85,0,1)*0.75-0.15;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(185,205,225,0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for(var i=0;i<raindrops.length;i++){
+    var d = raindrops[i];
+    var sp = d.sp*(1+S.rain*0.4);
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x - Math.sin(ang)*d.l, d.y + d.l);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+function mgmtRain(dt){
+  var ang = clamp((S.wind-5)/85,0,1)*0.75-0.15;
+  for(var i=0;i<raindrops.length;i++){
+    var d = raindrops[i];
+    var sp = d.sp*(1+S.rain*0.4);
+    d.y += sp*60*dt;
+    d.x -= Math.sin(ang)*sp*60*dt*0.6;
+    if(d.y > ch){ d.y = -10; d.x = Math.random()*cw; }
+    if(d.x > cw+20) d.x = -10;
+    if(d.x < -20) d.x = cw+10;
+  }
+}
+function drawSnow(){
+  if(S.snow<0.02) return;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  for(var i=0;i<snowflakes.length;i++){
+    var f = snowflakes[i];
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(f.x-f.r, f.y); ctx.lineTo(f.x+f.r, f.y); ctx.stroke();
+  }
+  ctx.restore();
+}
+function mgmtSnow(dt){
+  var windPx = S.wind*0.02*cw*dt;
+  for(var i=0;i<snowflakes.length;i++){
+    var f = snowflakes[i];
+    f.y += f.vy*60*dt;
+    f.x += windPx*0.8 + Math.sin(simT*1.4 + f.p)*0.004*cw;
+    if(f.y > ch+10){ f.y = -8; f.x = Math.random()*cw; }
+    if(f.x < -12) f.x = cw+8;
+    if(f.x > cw+12) f.x = -8;
+  }
+}
+function drawLeaves(){
+  if(leaves.length===0) return;
+  ctx.save();
+  for(var i=0;i<leaves.length;i++){
+    var lv = leaves[i];
+    ctx.save();
+    ctx.translate(lv.x, lv.y);
+    ctx.rotate(lv.rot);
+    ctx.fillStyle = 'rgba(120,150,60,0.85)';
+    ctx.beginPath(); ctx.ellipse(0,0,0.006*cw, 0.003*cw, 0,0,TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(160,170,70,0.5)';
+    ctx.beginPath(); ctx.ellipse(0,0,0.0035*cw,0.002*cw,0,0,TAU); ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function mgmtLeaves(dt){
+  for(var i=leaves.length-1;i>=0;i--){
+    var lv = leaves[i];
+    lv.x += lv.vx*dt; lv.y += lv.vy*dt; lv.rot += lv.vr*dt;
+    lv.vy += cw*0.004*dt;
+    if(lv.x < -60 || lv.x > cw+60 || lv.y > ch+60) leaves.splice(i,1);
+  }
+}
+function drawSnowLayers(st){
+  if(S.snow<0.25) return;
+  var a = (S.snow-0.25)/0.75*0.45;
+  ctx.fillStyle = cstr([255,255,255], a);
+  ctx.fillRect(0, ch*0.588, cw, ch*0.015);
+}
+function drawVignette(){
+  var g = ctx.createRadialGradient(cw*0.5, ch*0.45, Math.min(cw,ch)*0.5, cw*0.5, ch*0.5, Math.max(cw,ch)*0.75);
+  g.addColorStop(0, cstr([0,0,0],0));
+  g.addColorStop(1, cstr([0,0,0],0.28));
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,cw,ch);
+}
+
+function drawScene(st){
+  ctx.clearRect(0,0,cw,ch);
+  drawSky(st);
+  drawShore(st);
+  drawWater(st);
+  drawWindowReflections(st.day);
+  var wf = Math.min(1, S.wind/60);
+  drawPine(0.09*cw, 0.60*ch, 0.09*cw, wf*4, st.day);
+  drawPine(0.125*cw, 0.60*ch, 0.075*cw, wf*4, st.day);
+  drawTree(0.90*cw, 0.608*ch, 0.055*cw, wf*5, st.day);
+  drawTree(0.94*cw, 0.610*ch, 0.045*cw, wf*5, st.day);
+  drawHotel(st);
+  drawLighthouse(st);
+  drawPierBoat(st);
+  drawLamps(st);
+  ctx.fillStyle = cstr(mixc(TREE_D,[16,26,42],1-st.day),1);
+  for(var i=0;i<8;i++){
+    var bx = 0.28*cw + i*0.06*cw;
+    ctx.beginPath();
+    ctx.arc(bx + Math.sin(simT*1.3+i)*S.wind/70*0.003*cw, 0.588*ch, 0.011*cw, 0, TAU);
+    ctx.fill();
+  }
+  drawSnowLayers(st);
+  drawRain();
+  drawSnow();
+  drawLeaves();
+  drawVignette();
+}
+
+function codeInfo(c){
+  if(c===0) return {condition:'Cielo despejado', rain:0, snow:0, clouds:0.1, fog:0};
+  if(c===1) return {condition:'Mayormente despejado', rain:0, snow:0, clouds:0.25, fog:0};
+  if(c===2) return {condition:'Parcialmente nublado', rain:0, snow:0, clouds:0.45, fog:0};
+  if(c===3) return {condition:'Cubierto', rain:0, snow:0, clouds:0.9, fog:0};
+  if(c===45||c===48) return {condition:'Niebla', rain:0.05, snow:0, clouds:1, fog:0.6};
+  if(c===51||c===53||c===55) return {condition:'Llovizna', rain:0.25, snow:0, clouds:0.92, fog:0.1};
+  if(c===56||c===57) return {condition:'Llovizna helada', rain:0.2, snow:0.2, clouds:0.95, fog:0.2};
+  if(c===61) return {condition:'Lluvia ligera', rain:0.35, snow:0, clouds:0.9, fog:0};
+  if(c===63) return {condition:'Lluvia', rain:0.6, snow:0, clouds:0.95, fog:0};
+  if(c===65) return {condition:'Lluvia fuerte', rain:0.9, snow:0, clouds:1, fog:0};
+  if(c===66||c===67) return {condition:'Lluvia helada', rain:0.5, snow:0.25, clouds:1, fog:0.1};
+  if(c===71) return {condition:'Nevada ligera', rain:0, snow:0.45, clouds:0.92, fog:0.05};
+  if(c===73) return {condition:'Nevada', rain:0, snow:0.7, clouds:0.95, fog:0.1};
+  if(c===75) return {condition:'Nevada fuerte', rain:0, snow:0.95, clouds:1, fog:0.15};
+  if(c===77) return {condition:'Granos de nieve', rain:0, snow:0.5, clouds:0.9, fog:0};
+  if(c===80) return {condition:'Chubascos', rain:0.6, snow:0, clouds:0.85, fog:0};
+  if(c===81) return {condition:'Chubascos fuertes', rain:0.85, snow:0, clouds:0.9, fog:0};
+  if(c===82) return {condition:'Chubasco intenso', rain:1, snow:0, clouds:0.95, fog:0};
+  if(c===85) return {condition:'Chubascos de nieve', rain:0, snow:0.75, clouds:0.92, fog:0};
+  if(c===86) return {condition:'Chubascos intensos de nieve', rain:0, snow:0.95, clouds:0.95, fog:0};
+  if(c>=95) return {condition:'Tormenta', rain:0.95, snow:0, clouds:1, fog:0};
+  return {condition:'Cielo despejado', rain:0, snow:0, clouds:0.2, fog:0};
+}
+
+function fetchWeather(){
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+
+    '&current=temperature_2m,weather_code,precipitation,rain,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,is_day'+
+    '&timezone=Europe%2FParis&forecast_days=1';
+  fetch(url).then(function(r){ return r.json(); }).then(function(j){
+    var cur = j.current;
+    if(!cur) return;
+    var info = codeInfo(cur.weather_code);
+    W.temp = Math.round(cur.temperature_2m);
+    W.code = cur.weather_code;
+    W.condition = info.condition;
+    W.clouds = Math.min(1, (cur.cloud_cover/100)*0.85 + info.clouds*0.15);
+    W.rain = Math.max(info.rain, Math.min((cur.rain||0)/6,0.9) + Math.min(cur.precipitation||0,6)/12*0.4);
+    W.snow = Math.max(info.snow, Math.min((cur.snowfall||0)/4,1));
+    W.wind = cur.wind_speed_10m || 8;
+    W.windDir = cur.wind_direction_10m || 200;
+    W.fog = info.fog || 0;
+  }).catch(function(){});
+}
+function updateHUD(){
+  var el = document.getElementById('wTemp');
+  var wkmh = Math.round(S.wind);
+  var windTxt = wkmh<8 ? 'Calma' : (wkmh<20 ? 'Brisa '+wkmh+' km/h' : (wkmh<40 ? 'Viento '+wkmh+' km/h' : (wkmh<60 ? 'Viento fuerte '+wkmh+' km/h' : 'Galerna '+wkmh+' km/h')));
+  el.innerHTML = '<div class="c">'+W.temp+' °C · '+W.condition+'</div><div class="t">'+windTxt+'</div>';
+}
+
+function pad2(n){ return n<10 ? '0'+n : ''+n; }
+function updateCountdown(){
+  var diff = TARGET.getTime() - Date.now();
+  var doneEl = document.getElementById('done');
+  if(diff <= 0){
+    doneEl.style.display = 'flex';
+    return;
+  }
+  document.getElementById('cD').textContent = Math.floor(diff/86400000);
+  document.getElementById('cH').textContent = pad2(Math.floor(diff%86400000/3600000));
+  document.getElementById('cM').textContent = pad2(Math.floor(diff%3600000/60000));
+  document.getElementById('cS').textContent = pad2(Math.floor(diff%60000/1000));
+  var opts = {timeZone:'Europe/Paris', hour:'2-digit', minute:'2-digit', second:'2-digit'};
+  document.getElementById('clockT').textContent = new Intl.DateTimeFormat('es-ES', opts).format(new Date());
+}
+setInterval(updateCountdown, 1000);
+
+function resize(){
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cw = window.innerWidth; ch = window.innerHeight;
+  canvas.width = cw*dpr; canvas.height = ch*dpr;
+  canvas.style.width = cw+'px'; canvas.style.height = ch+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  buildWindows();
+}
+window.addEventListener('resize', resize);
+
+var btns = document.querySelectorAll('#panel button');
+btns.forEach(function(b){
+  b.addEventListener('click', function(){
+    btns.forEach(function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+    mode = b.getAttribute('data-m');
+  });
+});
+document.getElementById('btnSim').addEventListener('click', function(){
+  var p = document.getElementById('panel');
+  p.hidden = !p.hidden;
+  if(!p.hidden){ btns.forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-m')===mode); }); }
+});
+
+var thunderT = 0, thunderFlash = 0;
+function frame(now){
+  var dt = Math.min(0.05, (now-lastT)/1000);
+  lastT = now;
+  simT += dt;
+
+  var st = applyMode();
+  S.clouds += (st.clouds-S.clouds)*0.05;
+  S.rain += (st.rain-S.rain)*0.05;
+  S.snow += (st.snow-S.snow)*0.05;
+  S.wind += (st.wind-S.wind)*0.05;
+  S.fog += (st.fog-S.fog)*0.05;
+  curLitAmt = st.day<0.5 ? 1 : (st.rain>0.25||st.clouds>0.7 ? 0.45 : 0.18);
+  updateWindows(dt);
+
+  mgmtParticles();
+  mgmtRain(dt);
+  mgmtSnow(dt);
+  spawnLeaves(dt);
+  mgmtLeaves(dt);
+  if((mode==='storm') || (mode==='auto' && W.code>=95)){
+    thunderT -= dt;
+    if(thunderT <= 0){
+      thunderFlash = 1;
+      thunderT = 2.5 + Math.random()*6;
+    }
+    thunderFlash = Math.max(0, thunderFlash - dt*4);
+  } else {
+    thunderFlash = Math.max(0, thunderFlash - dt);
+  }
+
+  drawScene(st);
+
+  if(thunderFlash > 0.02){
+    ctx.save();
+    ctx.fillStyle = 'rgba(240,244,255,'+thunderFlash*0.35+')';
+    ctx.fillRect(0,0,cw,ch);
+    if(thunderFlash > 0.9) drawLightning();
+    ctx.restore();
+  }
+  updateHUD();
+  requestAnimationFrame(frame);
+}
+
+function drawLightning(){
+  var sx = 0.4*cw + Math.random()*0.2*cw;
+  var x = sx, y = 0.05*ch;
+  ctx.strokeStyle = 'rgba(255,255,240,0.9)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  while(y < ch*0.60){
+    x += (Math.random()-0.5)*0.06*cw;
+    y += ch*0.07;
+    ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,240,0.7)';
+  ctx.beginPath(); ctx.arc(x, y, cw*0.012,0,TAU); ctx.fill();
+}
+
+resize();
+updateCountdown();
+fetchWeather();
+setInterval(fetchWeather, 20*60*1000);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
