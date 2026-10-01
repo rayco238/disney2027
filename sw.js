@@ -1,4 +1,4 @@
-const CACHE = 'disney-2027-v7';
+const CACHE = 'disney-2027-v8';
 const SHELL = [
   '/',
   '/index.html',

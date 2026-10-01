@@ -568,50 +568,189 @@ function silhouetteRow(base, top, n, x0, x1){
 }
 function drawTree(cx, base, s, sway, day){
   var sw = Math.sin(simT*1.4 + cx*0.01)*sway;
-  var bark = mixc([96,72,56],[24,18,16],1-day);
-  var top = base - s*0.8;
-  ctx.strokeStyle = cstr(bark,1);
-  ctx.lineWidth = Math.max(2, s*0.06);
+  var n = 1-day*0.85;
+  var bark = mixc([110,82,60],[26,20,18],1-day), barkD = mixc([72,52,40],[14,11,11],1-day);
+  var cD = mixc(TREE_D,[14,24,40],n), cM = mixc(TREE,[20,34,54],n), cL = mixc(TREE_L,[26,40,60],n);
+  var cH = mixc([146,194,124],[36,52,72],n);
+  var top = base - s*0.8, R = s*0.37;
+  var kx = cx + sw, ky = top - R*0.05;
+  ctx.fillStyle = cstr([0,0,0],0.16);
+  ctx.beginPath(); ctx.ellipse(cx, base, s*0.30, s*0.035, 0, 0, TAU); ctx.fill();
+  // tronco y ramas
+  var tw = Math.max(2.5, s*0.075);
+  ctx.fillStyle = cstr(bark,1);
   ctx.beginPath();
-  ctx.moveTo(cx, base);
-  ctx.lineTo(cx+sw, top + s*0.25);
+  ctx.moveTo(cx-tw*0.95, base);
+  ctx.quadraticCurveTo(cx-tw*0.42, base-s*0.22, kx-tw*0.36, ky+R*0.2);
+  ctx.lineTo(kx+tw*0.36, ky+R*0.2);
+  ctx.quadraticCurveTo(cx+tw*0.42, base-s*0.22, cx+tw*0.95, base);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = cstr(barkD,0.6);
+  ctx.beginPath();
+  ctx.moveTo(cx+tw*0.2, base);
+  ctx.quadraticCurveTo(cx+tw*0.1, base-s*0.22, kx+tw*0.05, ky+R*0.2);
+  ctx.lineTo(kx+tw*0.36, ky+R*0.2);
+  ctx.quadraticCurveTo(cx+tw*0.42, base-s*0.22, cx+tw*0.95, base);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = cstr(bark,1); ctx.lineWidth = tw*0.42; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx+sw*0.5, base-s*0.36); ctx.lineTo(kx-R*0.45, ky+R*0.25);
+  ctx.moveTo(cx+sw*0.6, base-s*0.42); ctx.lineTo(kx+R*0.48, ky+R*0.18);
   ctx.stroke();
-  var blob = mixc(TREE,[20,34,54],1-day*0.85);
-  var blobL = mixc(TREE_L,[26,40,60],1-day*0.85);
-  var sh = mixc(TREE_D,[14,24,40],1-day*0.85);
-  ctx.save();
-  ctx.translate(cx+sw, top);
-  var r0 = s*0.30, r1 = s*0.24;
-  ctx.fillStyle = cstr(sh,1);
-  ctx.beginPath(); ctx.arc(-r0*0.6, r0*0.25, r0*0.9,0,TAU); ctx.fill();
-  ctx.beginPath(); ctx.arc(r0*0.6, r0*0.3, r0*0.8,0,TAU); ctx.fill();
-  ctx.fillStyle = cstr(blob,1);
+  ctx.lineCap = 'butt';
+  // copa en tres capas de follaje
+  var k, a, wob;
+  ctx.fillStyle = cstr(cD,1);
   ctx.beginPath();
-  ctx.arc(-r0*0.5, -r0*0.15, r0,0,TAU);
-  ctx.arc(r0*0.5,-r0*0.1,r1,0,TAU);
-  ctx.arc(0,-r0*0.45,r1*1.15,0,TAU);
+  for(k=0;k<8;k++){
+    a = k/8*TAU + rnd(cx+k)*0.5; wob = Math.sin(simT*1.8+k+cx)*sway*0.25;
+    var bx = kx + Math.cos(a)*R*0.6 + wob, by = ky + Math.sin(a)*R*0.46 + R*0.1, br = R*(0.44+rnd(cx*1.3+k)*0.14);
+    ctx.moveTo(bx+br, by); ctx.arc(bx, by, br, 0, TAU);
+  }
+  ctx.moveTo(kx+R*0.6, ky); ctx.arc(kx, ky, R*0.6, 0, TAU);
   ctx.fill();
-  ctx.fillStyle = cstr(blobL,0.8);
-  ctx.beginPath(); ctx.arc(-r0*0.25,-r0*0.4, r1*0.5,0,TAU); ctx.fill();
-  ctx.restore();
+  ctx.fillStyle = cstr(cM,1);
+  ctx.beginPath();
+  for(k=0;k<7;k++){
+    a = k/7*TAU + rnd(cx*2+k)*0.6; wob = Math.sin(simT*2.0+k*1.7+cx)*sway*0.3;
+    var mx = kx - R*0.07 + Math.cos(a)*R*0.46 + wob, my = ky - R*0.12 + Math.sin(a)*R*0.36, mr = R*(0.36+rnd(cx*1.7+k)*0.12);
+    ctx.moveTo(mx+mr, my); ctx.arc(mx, my, mr, 0, TAU);
+  }
+  ctx.fill();
+  ctx.fillStyle = cstr(cL,0.9);
+  ctx.beginPath();
+  for(k=0;k<5;k++){
+    a = k/5*TAU + rnd(cx*3+k); wob = Math.sin(simT*2.3+k*2.1+cx)*sway*0.35;
+    var lx = kx - R*0.24 + Math.cos(a)*R*0.3 + wob, ly = ky - R*0.3 + Math.sin(a)*R*0.24, lr = R*(0.22+rnd(cx*2.3+k)*0.1);
+    ctx.moveTo(lx+lr, ly); ctx.arc(lx, ly, lr, 0, TAU);
+  }
+  ctx.fill();
+  ctx.fillStyle = cstr(cH,0.75);
+  ctx.beginPath();
+  for(k=0;k<9;k++){
+    var hx = kx - R*0.3 + (rnd(cx*5+k)-0.5)*R*1.1, hy = ky - R*0.42 + (rnd(cx*7+k)-0.5)*R*0.8;
+    ctx.moveTo(hx+R*0.07, hy); ctx.arc(hx, hy, R*0.07, 0, TAU);
+  }
+  ctx.fill();
+  if(S.snow>0.25){
+    ctx.fillStyle = cstr([255,255,255],(S.snow-0.25)/0.75*0.85);
+    ctx.beginPath();
+    ctx.ellipse(kx-R*0.1, ky-R*0.62, R*0.62, R*0.2, 0, 0, TAU);
+    ctx.ellipse(kx-R*0.55, ky-R*0.25, R*0.3, R*0.12, 0, 0, TAU);
+    ctx.ellipse(kx+R*0.5, ky-R*0.3, R*0.3, R*0.12, 0, 0, TAU);
+    ctx.fill();
+  }
 }
 function drawPine(cx,base,s,sway,day){
   var sw = Math.sin(simT*1.2+cx)*sway;
-  ctx.fillStyle = cstr(mixc([72,52,40],[20,16,18],1-day),1);
-  ctx.fillRect(cx-s*0.04, base-s*0.4, s*0.08, s*0.4);
-  var col = mixc(PINE,[18,30,46],1-day);
-  ctx.fillStyle = cstr(col,1);
-  for(var i=0;i<4;i++){
-    var y = base - s*(0.25 + i*0.2);
-    var w = s*(0.34 - i*0.05);
-    var off = sw*(0.3 + 0.25*i);
+  ctx.fillStyle = cstr([0,0,0],0.16);
+  ctx.beginPath(); ctx.ellipse(cx, base, s*0.26, s*0.03, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = cstr(mixc([84,60,44],[20,16,18],1-day),1);
+  ctx.fillRect(cx-s*0.035, base-s*0.3, s*0.07, s*0.3);
+  var col = mixc(PINE,[18,30,46],1-day), colD = mixc([34,70,52],[10,18,30],1-day), colL = mixc([84,132,96],[26,40,58],1-day);
+  var tiers = 6, snowA = S.snow>0.25 ? (S.snow-0.25)/0.75*0.9 : 0;
+  for(var i=0;i<tiers;i++){
+    var t = i/(tiers-1);
+    var y = base - s*(0.16 + t*0.78);
+    var w = s*(0.36 - t*0.27), hgt = s*(0.30 - t*0.08);
+    var off = sw*(0.2 + 0.8*t);
+    // faldón dentado
+    ctx.fillStyle = cstr(col,1);
     ctx.beginPath();
-    ctx.moveTo(cx - w + off, y);
-    ctx.lineTo(cx + off, y - s*0.18);
-    ctx.lineTo(cx + w + off, y);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(cx+off*1.1, y-hgt);
+    ctx.lineTo(cx+w+off, y);
+    for(var z=1;z<=5;z++){
+      var zx = cx + w - (z/5)*w*2 + off;
+      ctx.lineTo(zx + w*0.2, y - hgt*0.16);
+      ctx.lineTo(zx, y + (z%2 ? hgt*0.04 : 0));
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = cstr(colD,0.7);
+    ctx.beginPath();
+    ctx.moveTo(cx+off*1.1, y-hgt); ctx.lineTo(cx+w+off, y); ctx.lineTo(cx+w*0.15+off, y-hgt*0.14);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = cstr(colL,0.55);
+    ctx.beginPath();
+    ctx.moveTo(cx+off*1.1, y-hgt); ctx.lineTo(cx-w*0.75+off, y-hgt*0.12); ctx.lineTo(cx-w*0.3+off, y-hgt*0.2);
+    ctx.closePath(); ctx.fill();
+    if(snowA>0){
+      ctx.fillStyle = cstr([255,255,255],snowA);
+      ctx.beginPath();
+      ctx.moveTo(cx+off*1.1, y-hgt); ctx.lineTo(cx+w*0.55+off, y-hgt*0.4); ctx.lineTo(cx+w*0.2+off, y-hgt*0.5);
+      ctx.lineTo(cx+off, y-hgt*0.36); ctx.lineTo(cx-w*0.25+off, y-hgt*0.5); ctx.lineTo(cx-w*0.55+off, y-hgt*0.4);
+      ctx.closePath(); ctx.fill();
+    }
   }
+}
+// Arbusto redondeado en tres tonos
+function drawBush(cx, cy, r, day){
+  var n = 1-day*0.85;
+  ctx.fillStyle = cstr(mixc(TREE_D,[14,24,40],n),1);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+  ctx.fillStyle = cstr(mixc(TREE,[20,34,54],n),1);
+  ctx.beginPath(); ctx.arc(cx-r*0.14, cy-r*0.18, r*0.78, 0, TAU); ctx.fill();
+  ctx.fillStyle = cstr(mixc(TREE_L,[26,40,60],n),0.85);
+  ctx.beginPath(); ctx.arc(cx-r*0.3, cy-r*0.38, r*0.4, 0, TAU); ctx.fill();
+}
+// Matas de hierba repartidas por una franja de césped
+function drawGrassTufts(x0, x1, y0, y1, count, day, seed){
+  var lean = Math.sin(simT*1.6)*S.wind/60*0.004*cw + S.wind/60*0.002*cw;
+  for(var p=0;p<2;p++){
+    ctx.strokeStyle = cstr(mixc(p ? [150,200,118] : [64,116,70],[14,26,40],1-day), 0.8);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for(var i=p;i<count;i+=2){
+      var gx = x0 + rnd(seed+i*3.1)*(x1-x0), gy = y0 + rnd(seed+i*7.7)*(y1-y0);
+      var gh = (0.006 + rnd(seed+i*1.3)*0.006)*ch;
+      ctx.moveTo(gx-2.5, gy); ctx.lineTo(gx-3.5+lean, gy-gh*0.8);
+      ctx.moveTo(gx, gy); ctx.lineTo(gx+lean, gy-gh);
+      ctx.moveTo(gx+2.5, gy); ctx.lineTo(gx+3.5+lean, gy-gh*0.75);
+    }
+    ctx.stroke();
+  }
+}
+// Nenúfares: pts = [[fx, fy, tamaño, flor]]
+function drawLilyPads(pts, day){
+  for(var i=0;i<pts.length;i++){
+    var lx = pts[i][0]*cw + Math.sin(simT*0.6+i*1.9)*0.0015*cw, ly = pts[i][1]*ch + Math.sin(simT*0.9+i)*0.001*ch;
+    var r = pts[i][2]*cw;
+    ctx.fillStyle = cstr(mixc(i%2 ? [70,140,84] : [92,160,96],[14,30,36],1-day),1);
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.ellipse(lx, ly, r, r*0.36, 0, 0.35, TAU-0.25);
+    ctx.closePath(); ctx.fill();
+    if(pts[i][3]){
+      ctx.fillStyle = cstr(mixc([250,190,210],[90,70,96],(1-day)*0.8),1);
+      ctx.beginPath(); ctx.arc(lx-r*0.25, ly-r*0.2, r*0.28, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = cstr(mixc([255,236,150],[110,100,80],(1-day)*0.8),1);
+      ctx.beginPath(); ctx.arc(lx-r*0.25, ly-r*0.22, r*0.1, 0, TAU); ctx.fill();
+    }
+  }
+}
+// Juncos y espadañas
+function drawReeds(cx, base, n, h, day){
+  var lean = (Math.sin(simT*1.5+cx*0.02)*0.5+0.6)*S.wind/60*0.012*cw;
+  var g = cstr(mixc([92,136,72],[16,28,36],1-day),1), g2 = cstr(mixc([62,104,58],[10,20,28],1-day),1);
+  var head = cstr(mixc([110,74,46],[26,20,20],1-day),1);
+  for(var i=0;i<n;i++){
+    var rx = cx + (rnd(cx+i*2.3)-0.5)*0.03*cw, rh = h*(0.6+rnd(cx+i*5.1)*0.5);
+    var tx = rx + (rnd(cx+i*9.1)-0.5)*0.008*cw + lean*(rh/h);
+    ctx.strokeStyle = i%2 ? g : g2; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(rx, base); ctx.quadraticCurveTo(rx, base-rh*0.6, tx, base-rh); ctx.stroke();
+    if(i%3===0){
+      ctx.strokeStyle = head; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(tx, base-rh); ctx.lineTo(tx-(tx-rx)*0.2, base-rh+0.016*ch); ctx.stroke();
+      ctx.lineCap = 'butt';
+    }
+  }
+}
+function drawLakePlants(st){
+  var day = st.day;
+  drawReeds(0.105*cw, 0.612*ch, 9, 0.045*ch, day);
+  drawReeds(0.205*cw, 0.612*ch, 7, 0.038*ch, day);
+  drawReeds(0.905*cw, 0.610*ch, 9, 0.042*ch, day);
+  drawReeds(0.585*cw, 0.609*ch, 5, 0.030*ch, day);
+  drawLilyPads([[0.275,0.622,0.008,1],[0.292,0.630,0.010,0],[0.312,0.624,0.007,0],[0.845,0.626,0.009,1],[0.868,0.633,0.011,0],[0.826,0.634,0.007,0],[0.62,0.620,0.007,1]], day);
 }
 
 function drawStar(cx,cy,r){
@@ -1011,15 +1150,20 @@ function drawHotel(st){
     ctx.fillRect(pedX-0.13*cw, sy0-0.03*ch, 0.26*cw, sh0+0.06*ch);
   }
 
-  // Setos
-  var hd = mixc(TREE_D,[14,24,40],1-day*0.85), hl = mixc(TREE,[20,34,54],1-day*0.85);
+  // Setos, macizos de flores y hierba
+  drawGrassTufts(0, cw, 0.535*ch, 0.578*ch, 70, day, 5);
   for(var hb=0; hb<64; hb++){
     var hx = (hb+0.5)/64*cw;
     if(Math.abs(hx-pedX) < 0.058*cw) continue;
     var inC = hx>vx0-0.01*cw && hx<vx1+0.01*cw;
-    var hy = (inC ? 0.556 : 0.514)*ch, hr = (0.0085 + rnd(hb*4.3)*0.004)*cw;
-    ctx.fillStyle = cstr(hb%2 ? hd : hl,1);
-    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, TAU); ctx.fill();
+    drawBush(hx, (inC ? 0.556 : 0.514)*ch, (0.0088 + rnd(hb*4.3)*0.004)*cw, day);
+  }
+  var FL = [[226,60,70],[250,246,240],[246,150,176],[250,206,80]];
+  for(var fl=0; fl<110; fl++){
+    var flx = vx0 + rnd(fl*3.7)*(vx1-vx0);
+    if(Math.abs(flx-pedX) < 0.062*cw) continue;
+    ctx.fillStyle = cstr(mixc(FL[fl%4],[30,30,48],(1-day)*0.8),1);
+    ctx.beginPath(); ctx.arc(flx, (0.568+rnd(fl*9.1)*0.007)*ch, 2.1, 0, TAU); ctx.fill();
   }
 
   ctx.restore();
@@ -1517,17 +1661,36 @@ function drawCastleScene(st){
   // Fondo: césped lejano y arboleda
   ctx.fillStyle = cstr(lawn,1);
   ctx.fillRect(0, ch*0.585, cw, ch*0.415+2);
-  for(var bt=0; bt<2; bt++){
-    ctx.fillStyle = cstr(bt ? farT : farTD,1);
-    ctx.beginPath();
-    for(var bi=0; bi<=44; bi++){
-      var btx = (bi/44)*cw + (rnd(bi*3.3+bt*17)-0.5)*0.02*cw;
-      var btr = (0.022 + rnd(bi*5.9+bt*7)*0.02)*cw*(bt?0.8:1);
-      var bty = (bt ? 0.585 : 0.565)*ch - rnd(bi*2.1+bt)*0.02*ch;
-      ctx.moveTo(btx+btr, bty);
-      ctx.arc(btx, bty, btr, 0, TAU);
+  var hazeT = mixc(mixc([170,196,206],[255,190,160],st.golden*0.5),[24,34,54],nt);
+  for(var bt=0; bt<3; bt++){
+    var btC = bt===0 ? mixc(farTD,hazeT,0.55) : (bt===1 ? farTD : farT);
+    var btN = bt===0 ? 30 : 44;
+    for(var bp=0; bp<2; bp++){
+      ctx.fillStyle = bp ? cstr(mixc(btC,[255,255,220],0.16*day),0.7) : cstr(btC,1);
+      ctx.beginPath();
+      for(var bi=0; bi<=btN; bi++){
+        var btx = (bi/btN)*cw + (rnd(bi*3.3+bt*17)-0.5)*0.02*cw;
+        var btr = (0.022 + rnd(bi*5.9+bt*7)*0.02)*cw*(bt===2?0.8:(bt===0?0.9:1));
+        var bty = [0.548,0.566,0.586][bt]*ch - rnd(bi*2.1+bt)*0.02*ch;
+        if(bp){ btx -= btr*0.28; bty -= btr*0.32; btr *= 0.5; }
+        ctx.moveTo(btx+btr, bty);
+        ctx.arc(btx, bty, btr, 0, TAU);
+      }
+      ctx.fill();
     }
-    ctx.fill();
+    if(bt===0){
+      // cipreses asomando sobre la arboleda
+      ctx.fillStyle = cstr(mixc(farTD,hazeT,0.3),1);
+      var CYP = [0.03,0.075,0.20,0.245,0.29,0.705,0.75,0.83,0.875,0.965];
+      for(var cyi=0; cyi<CYP.length; cyi++){
+        var cyh = (0.07+rnd(cyi*4.4)*0.035)*ch, cyx = CYP[cyi]*cw + Math.sin(simT*1.3+cyi)*wf*0.002*cw;
+        ctx.beginPath();
+        ctx.moveTo(CYP[cyi]*cw-0.007*cw, 0.57*ch);
+        ctx.quadraticCurveTo(CYP[cyi]*cw-0.010*cw, 0.57*ch-cyh*0.5, cyx, 0.57*ch-cyh);
+        ctx.quadraticCurveTo(CYP[cyi]*cw+0.010*cw, 0.57*ch-cyh*0.5, CYP[cyi]*cw+0.007*cw, 0.57*ch);
+        ctx.closePath(); ctx.fill();
+      }
+    }
   }
   ctx.fillStyle = cstr(farT,1);
   ctx.fillRect(0, ch*0.585, cw, ch*0.03);
@@ -1832,12 +1995,9 @@ function drawCastleScene(st){
   for(var hb=0; hb<34; hb++){
     var hbx = (0.325 + hb*0.0106)*cw;
     if(Math.abs(hbx-gx) < 0.026*cw) continue;
-    var hbr = (0.007 + rnd(hb*3.9)*0.005)*cw;
-    ctx.fillStyle = cstr(hb%2 ? topi : topiS,1);
-    ctx.beginPath(); ctx.arc(hbx, (yB+0.012)*ch, hbr, 0, TAU); ctx.fill();
-    ctx.fillStyle = cstr(topiL,0.55);
-    ctx.beginPath(); ctx.arc(hbx-hbr*0.25, (yB+0.012)*ch-hbr*0.3, hbr*0.5, 0, TAU); ctx.fill();
+    drawBush(hbx, (yB+0.012)*ch, (0.008 + rnd(hb*3.9)*0.005)*cw, day);
   }
+  drawGrassTufts(0.24*cw, 0.76*cw, 0.575*ch, 0.655*ch, 46, day, 11);
 
   // Rocas y cascada
   function rock(fx, fy, fr){
@@ -1889,6 +2049,12 @@ function drawCastleScene(st){
     ctx.fillRect(cx+s*0.22, ty, s*0.28, s);
     ctx.fillStyle = cstr(topiL,1);
     ctx.fillRect(cx-s/2, ty, s, s*0.2);
+    for(var lf=0; lf<10; lf++){
+      ctx.fillStyle = cstr(lf%2 ? topiL : topiS, 0.55);
+      ctx.beginPath(); ctx.arc(cx-s*0.42+rnd(fx*31+lf)*s*0.84, ty+s*0.26+rnd(fx*17+lf*3)*s*0.68, s*0.07, 0, TAU); ctx.fill();
+    }
+    ctx.fillStyle = cstr([0,0,0],0.14);
+    ctx.beginPath(); ctx.ellipse(cx, y, s*0.5, s*0.09, 0, 0, TAU); ctx.fill();
   }
   var CT = [[0.222,0.640,0.020],[0.250,0.617,0.021],[0.279,0.588,0.022],[0.306,0.556,0.022],
             [0.694,0.556,0.022],[0.721,0.588,0.022],[0.750,0.617,0.021],[0.778,0.640,0.020],
@@ -1905,6 +2071,11 @@ function drawCastleScene(st){
     ctx.fillRect(0.12*cw, 0.0, 0.76*cw, 0.70*ch);
     ctx.restore();
   }
+
+  drawLilyPads([[0.185,0.672,0.008,1],[0.205,0.684,0.010,0],[0.165,0.688,0.007,0],[0.790,0.676,0.009,0],[0.815,0.688,0.010,1],[0.300,0.708,0.008,0],[0.705,0.709,0.008,1]], day);
+  drawReeds(0.232*cw, 0.716*ch, 6, 0.034*ch, day);
+  drawReeds(0.772*cw, 0.716*ch, 6, 0.034*ch, day);
+  drawGrassTufts(0, cw, 0.728*ch, 0.756*ch, 40, day, 37);
 
   // Central Plaza: pavimento en perspectiva
   var pavTop = mixc([212,190,176],[64,58,72],nt);
@@ -2419,6 +2590,7 @@ function drawScene(st){
     drawHotel(st);
     drawTrees(st);
     drawLighthouse(st);
+    drawLakePlants(st);
     drawLamps(st);
   }
   drawSnowLayers(st);
