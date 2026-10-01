@@ -26,9 +26,9 @@ There is **no build step** — the entire app lives in `index.html`.
 - `applyMode()` — the environment simulation modes (auto/day/night/dusk/rain/snow/storm/wind).
 - `drawScene()` — orchestrates the two scenes; `drawHotel()`/`drawCastleScene()` draw them.
 - `codeInfo()` — maps Open-Meteo weather codes to scene states.
-- `fetchWeather()` — Open-Meteo call; refresh interval set at the bottom of the script.
+- `fetchWeather()` — Open-Meteo call; se reprograma sola con `scheduleWeather()` (10 min, 1 min si falla) y al volver a la pestaña.
 - `TARGET`, `LAT`, `LON` — trip date and location constants at the top of the `<script>`.
-- `sw.js` — service worker (cache name `disney-2027-v10`); bump the `CACHE` constant when the shell assets change.
+- `sw.js` — service worker (cache name `disney-2027-v11`); bump the `CACHE` constant when the shell assets change.
 
 ## Deploy
 

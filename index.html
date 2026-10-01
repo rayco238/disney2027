@@ -118,7 +118,7 @@ var simT = 0, lastT = performance.now(), cldT = 0;
 
 var mode = 'auto';
 var scene = 'hotel';
-var W = { temp:14, code:2, clouds:0.25, rain:0, snow:0, wind:10, windDir:200, fog:0, condition:'Cielo despejado' };
+var W = { temp:14, code:2, clouds:0.25, rain:0, snow:0, wind:10, windDir:200, fog:0, condition:'', ready:false };
 var S = { clouds:0.25, rain:0, snow:0, wind:10, fog:0 };
 
 function clamp(x,a,b){ return x<a?a:(x>b?b:x); }
@@ -238,8 +238,8 @@ var stars=[];
 var STAR_COL = [[255,255,255],[214,228,255],[255,244,220],[255,226,196],[196,214,255]];
 var cloudsL=[];
 // Cada nube guarda sus lóbulos (en unidades de ancho/alto) para tener forma propia
-function makeCloud(kind){
-  var cl = {x:Math.random()*1.7-0.35, kind:kind, o:0.5+Math.random()*0.5, lobes:[]};
+function makeCloud(kind, th){
+  var cl = {x:Math.random()*1.7-0.35, kind:kind, o:0.5+Math.random()*0.5, th:th||0, lobes:[]};
   if(kind===1){ cl.y = 0.30+Math.random()*0.15; cl.s = 0.32+Math.random()*0.3; }
   else if(kind===2){ cl.y = 0.03+Math.random()*0.26; cl.s = 1.3+Math.random()*1.2; }
   else { cl.y = 0.05+Math.random()*0.26; cl.s = 0.7+Math.random()*1.4; }
@@ -255,8 +255,9 @@ function makeCloud(kind){
 }
 (function(){
   var i;
-  for(i=0;i<5;i++) cloudsL.push(makeCloud(1));
-  for(i=0;i<6;i++) cloudsL.push(makeCloud(0));
+  // th: nubosidad a partir de la cual aparece cada nube (cielo despejado = ninguna)
+  for(i=0;i<5;i++) cloudsL.push(makeCloud(1, 0.10+i*0.06));
+  for(i=0;i<6;i++) cloudsL.push(makeCloud(0, 0.16+i*0.06));
   for(i=0;i<6;i++) cloudsL.push(makeCloud(2));
 })();
 var moonPos=null;
@@ -438,7 +439,7 @@ function drawClouds(st){
   var deck = smooth(0.4,0.8,S.clouds);
 
   // Cirros altos
-  var ca = (1-deck)*(0.35+0.4*day);
+  var ca = (1-deck)*(0.35+0.4*day)*smooth(0.08,0.3,S.clouds);
   if(ca>0.02){
     for(var ci=0;ci<cirrus.length;ci++){
       var cr = cirrus[ci];
@@ -462,7 +463,7 @@ function drawClouds(st){
     cl.x += (pxPerSec/cw)*cdt;
     if(cl.x > 1.4) cl.x = -0.45;
     if(cl.x < -0.5) cl.x = 1.35;
-    var al = cl.kind===1 ? 0.6 : (cl.kind===2 ? deck : 0.8+0.2*cl.o);
+    var al = cl.kind===2 ? deck : (cl.kind===1 ? 0.6 : 0.8+0.2*cl.o)*smooth(cl.th, cl.th+0.1, S.clouds);
     if(al<0.03) continue;
     var cx = cl.x*cw, cy = cl.y*ch;
     var w = cl.s*cw*0.17, h = cl.s*ch*0.05;
@@ -520,7 +521,7 @@ function drawFog(st){
   var g = ctx.createLinearGradient(0,ch*0.42,0,ch*0.78);
   var col = mixc([226,232,238],[40,52,78],1-st.day);
   g.addColorStop(0, cstr(col,0));
-  g.addColorStop(1, cstr(col,0.55));
+  g.addColorStop(1, cstr(col,0.55*smooth(0,0.12,st.fog)));
   ctx.fillStyle=g;
   ctx.fillRect(0,ch*0.42,cw,ch*0.36);
 }
@@ -3140,13 +3141,13 @@ function codeInfo(c){
   if(c===1) return {condition:'Mayormente despejado', rain:0, snow:0, clouds:0.25, fog:0};
   if(c===2) return {condition:'Parcialmente nublado', rain:0, snow:0, clouds:0.45, fog:0};
   if(c===3) return {condition:'Cubierto', rain:0, snow:0, clouds:0.9, fog:0};
-  if(c===45||c===48) return {condition:'Niebla', rain:0.05, snow:0, clouds:1, fog:0.6};
+  if(c===45||c===48) return {condition:'Niebla', rain:0, snow:0, clouds:1, fog:0.6};
   if(c===51||c===53||c===55) return {condition:'Llovizna', rain:0.25, snow:0, clouds:0.92, fog:0.1};
-  if(c===56||c===57) return {condition:'Llovizna helada', rain:0.2, snow:0.2, clouds:0.95, fog:0.2};
+  if(c===56||c===57) return {condition:'Llovizna helada', rain:0.25, snow:0, clouds:0.95, fog:0.2};
   if(c===61) return {condition:'Lluvia ligera', rain:0.35, snow:0, clouds:0.9, fog:0};
   if(c===63) return {condition:'Lluvia', rain:0.6, snow:0, clouds:0.95, fog:0};
   if(c===65) return {condition:'Lluvia fuerte', rain:0.9, snow:0, clouds:1, fog:0};
-  if(c===66||c===67) return {condition:'Lluvia helada', rain:0.5, snow:0.25, clouds:1, fog:0.1};
+  if(c===66||c===67) return {condition:'Lluvia helada', rain:0.5, snow:0, clouds:1, fog:0.1};
   if(c===71) return {condition:'Nevada ligera', rain:0, snow:0.45, clouds:0.92, fog:0.05};
   if(c===73) return {condition:'Nevada', rain:0, snow:0.7, clouds:0.95, fog:0.1};
   if(c===75) return {condition:'Nevada fuerte', rain:0, snow:0.95, clouds:1, fog:0.15};
@@ -3156,34 +3157,74 @@ function codeInfo(c){
   if(c===82) return {condition:'Chubasco intenso', rain:1, snow:0, clouds:0.95, fog:0};
   if(c===85) return {condition:'Chubascos de nieve', rain:0, snow:0.75, clouds:0.92, fog:0};
   if(c===86) return {condition:'Chubascos intensos de nieve', rain:0, snow:0.95, clouds:0.95, fog:0};
+  if(c===96||c===99) return {condition:'Tormenta con granizo', rain:0.95, snow:0, clouds:1, fog:0};
   if(c>=95) return {condition:'Tormenta', rain:0.95, snow:0, clouds:1, fog:0};
-  return {condition:'Cielo despejado', rain:0, snow:0, clouds:0.2, fog:0};
+  return {condition:'Tiempo variable', rain:0, snow:0, clouds:0.3, fog:0, unknown:true};
 }
 
+// Rango de nubosidad coherente con el rótulo de cada código
+function cloudRange(c, info){
+  if(c===0) return [0, 0.08];
+  if(c===1) return [0.14, 0.32];
+  if(c===2) return [0.34, 0.7];
+  if(c===3) return [0.78, 1];
+  if(info.unknown) return [0, 1];
+  return [0.8, 1];
+}
+var wxTimer = 0, wxLast = 0;
+function scheduleWeather(ms){
+  clearTimeout(wxTimer);
+  wxTimer = setTimeout(fetchWeather, ms);
+}
 function fetchWeather(){
   var url = 'https://api.open-meteo.com/v1/forecast?latitude='+LAT+'&longitude='+LON+
-    '&current=temperature_2m,weather_code,precipitation,rain,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,is_day'+
+    '&current=temperature_2m,weather_code,precipitation,rain,showers,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,is_day'+
     '&timezone=Europe%2FParis&forecast_days=1';
-  fetch(url).then(function(r){ return r.json(); }).then(function(j){
+  fetch(url).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(j){
     var cur = j.current;
-    if(!cur) return;
+    if(!cur || typeof cur.weather_code!=='number') throw new Error('sin datos');
     var info = codeInfo(cur.weather_code);
+    var cr = cloudRange(cur.weather_code, info);
+    var cc = typeof cur.cloud_cover==='number' ? cur.cloud_cover/100 : info.clouds;
+    var liq = (cur.rain||0) + (cur.showers||0);
     W.temp = Math.round(cur.temperature_2m);
     W.code = cur.weather_code;
     W.condition = info.condition;
-    W.clouds = Math.min(1, (cur.cloud_cover/100)*0.85 + info.clouds*0.15);
-    W.rain = Math.max(info.rain, Math.min((cur.rain||0)/6,0.9) + Math.min(cur.precipitation||0,6)/12*0.4);
-    W.snow = Math.max(info.snow, Math.min((cur.snowfall||0)/4,1));
-    W.wind = cur.wind_speed_10m || 8;
-    W.windDir = cur.wind_direction_10m || 200;
+    // La escena sigue al código: la medida real solo matiza la intensidad
+    W.clouds = clamp(cc*0.85 + info.clouds*0.15, cr[0], cr[1]);
+    W.rain = info.rain>0 ? clamp(liq/5, info.rain, Math.min(1, info.rain+0.2)) : 0;
+    W.snow = info.snow>0 ? clamp((cur.snowfall||0)/4, info.snow, Math.min(1, info.snow+0.2)) : 0;
+    W.wind = typeof cur.wind_speed_10m==='number' ? cur.wind_speed_10m : 8;
+    W.windDir = typeof cur.wind_direction_10m==='number' ? cur.wind_direction_10m : 200;
     W.fog = info.fog || 0;
-  }).catch(function(){});
+    W.ready = true;
+    wxLast = Date.now();
+    scheduleWeather(10*60*1000);
+  }).catch(function(){
+    // Sin red: reintenta pronto y mantiene el último tiempo conocido
+    scheduleWeather(60*1000);
+  });
 }
+function refreshIfStale(){
+  if(document.hidden) return;
+  if(Date.now()-wxLast > 5*60*1000) fetchWeather();
+}
+document.addEventListener('visibilitychange', refreshIfStale);
+window.addEventListener('online', refreshIfStale);
+var MODE_NAMES = {day:'Día', night:'Noche', dusk:'Atardecer', rain:'Lluvia', snow:'Nieve', storm:'Tormenta', wind:'Viento'};
+var hudTxt = '';
 function updateHUD(){
   var el = document.getElementById('wTemp');
   var wkmh = Math.round(S.wind);
   var windTxt = wkmh<8 ? 'Calma' : (wkmh<20 ? 'Brisa '+wkmh+' km/h' : (wkmh<40 ? 'Viento '+wkmh+' km/h' : (wkmh<60 ? 'Viento fuerte '+wkmh+' km/h' : 'Galerna '+wkmh+' km/h')));
-  el.innerHTML = '<div class="c">'+W.temp+' °C · '+W.condition+'</div><div class="t">'+windTxt+'</div>';
+  var cond = mode!=='auto' ? 'Simulación · '+MODE_NAMES[mode] : (W.ready ? W.temp+' °C · '+W.condition : 'Cargando tiempo…');
+  var txt = '<div class="c">'+cond+'</div><div class="t">'+windTxt+'</div>';
+  if(txt===hudTxt) return;
+  hudTxt = txt;
+  el.innerHTML = txt;
 }
 
 function pad2(n){ return n<10 ? '0'+n : ''+n; }
@@ -3257,6 +3298,8 @@ function frame(now){
   S.snow += (st.snow-S.snow)*0.05;
   S.wind += (st.wind-S.wind)*0.05;
   S.fog += (st.fog-S.fog)*0.05;
+  // El cielo usa los valores suavizados para que los cambios de tiempo sean graduales
+  st.clouds = S.clouds; st.fog = S.fog;
   curLitAmt = st.day<0.5 ? 1 : (st.rain>0.25||st.clouds>0.7 ? 0.45 : 0.18);
   updateWindows(dt);
   mgmtDucks(dt);
@@ -3310,7 +3353,6 @@ function drawLightning(){
 resize();
 updateCountdown();
 fetchWeather();
-setInterval(fetchWeather, 20*60*1000);
 requestAnimationFrame(frame);
 
 if('serviceWorker' in navigator){
