@@ -186,7 +186,7 @@ function buildWindows(){
   for(var r=0;r<rows;r++){
     for(var c=0;c<cols;c++){
       var x = wallL + c*gap + (gap-ww)/2;
-      windows.push({x:x, y:rowYs[r]*ch - wh/2, w:ww, h:wh, on: rnd(c*31.7+r*17.3) > 0.45, pass: rnd(c+r*5.3), lit: Math.random() < 0.3, ch: 3+Math.random()*14});
+      windows.push({x:x, y:rowYs[r]*ch - wh/2, w:ww, h:wh, on: rnd(c*31.7+r*17.3) > 0.45, pass: rnd(c+r*5.3), lit: Math.random() < 0.3, ch: 3+Math.random()*14, aw: r>=2});
     }
   }
   var wingRects = [[0,0.26*cw],[0.74*cw,cw]];
@@ -198,7 +198,7 @@ function buildWindows(){
     for(var c=0;c<wc;c++){
       for(var r=0;r<4;r++){
         var x = x0 + c*wg + (wg-wwW)/2;
-        windows.push({x:x, y:wingRows[r]*ch - whW/2, w:wwW, h:whW, on:true, pass:rnd(c*3.1+r*7.7), lit: Math.random() < 0.3, ch: 3+Math.random()*14});
+        windows.push({x:x, y:wingRows[r]*ch - whW/2, w:wwW, h:whW, on:true, pass:rnd(c*3.1+r*7.7), lit: Math.random() < 0.3, ch: 3+Math.random()*14, aw: r===3});
       }
     }
   }
@@ -209,7 +209,7 @@ var OVC_SKY_TOP=[102,112,130], OVC_SKY_MID=[135,146,162], OVC_SKY_LOW=[176,188,2
 var NIT_SKY_TOP=[5,11,26], NIT_SKY_MID=[16,30,60], NIT_SKY_LOW=[40,62,96];
 var DUSK_TOP=[108,121,165], DUSK_MID=[158,132,172], DUSK_LOW=[226,166,128];
 var WALL=[232,224,206], WALL_SH=[206,196,176], TRIM=[244,241,232];
-var ROOF=[27,62,89], ROOF_D=[19,46,68], SHUT=[40,60,78];
+var ROOF=[60,92,116], ROOF_D=[38,64,86], SHUT=[40,60,78];
 var NAVY=[30,44,66];
 var GLASS_DAY=[150,190,226], GLASS_DRK=[104,130,160];
 var LAMP=[255,213,138], LAMP_GLOW=[255,190,90];
@@ -379,15 +379,34 @@ function drawFog(st){
 
 function drawShore(st){
   var day = st.day;
-  var grass = mixc([96,140,96],[14,24,40],1-day);
-  var sand = mixc([186,170,140],[24,30,44],1-day);
-  ctx.fillStyle = cstr(grass,1);
-  ctx.fillRect(0, ch*0.505, cw, ch*0.085);
-  ctx.fillStyle = cstr(sand,1);
-  ctx.fillRect(0, ch*0.588, cw, ch*0.015);
   var far = mixc([120,166,120],[26,40,62],1-day);
   ctx.fillStyle = cstr(far,1);
   silhouetteRow(ch*0.50, ch*0.535, 26, 0, cw);
+  var g = ctx.createLinearGradient(0,ch*0.50,0,ch*0.58);
+  g.addColorStop(0, cstr(mixc([84,132,88],[12,22,36],1-day)));
+  g.addColorStop(1, cstr(mixc([118,170,104],[18,30,46],1-day)));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, ch*0.50, cw, ch*0.082);
+  // Sendero de la escalinata y paseo del lago
+  var sand = mixc([214,198,168],[30,36,50],1-day);
+  ctx.fillStyle = cstr(sand,1);
+  ctx.beginPath();
+  ctx.moveTo(0.445*cw, 0.582*ch); ctx.lineTo(0.555*cw, 0.582*ch);
+  ctx.lineTo(0.575*cw, 0.60*ch); ctx.lineTo(0.425*cw, 0.60*ch);
+  ctx.closePath(); ctx.fill();
+  ctx.fillRect(0, ch*0.580, cw, ch*0.018);
+  ctx.strokeStyle = cstr(mixc([176,158,128],[20,26,38],1-day),0.7); ctx.lineWidth = 1;
+  ctx.beginPath();
+  for(var i=0; i<80; i++){ ctx.moveTo(i/80*cw, ch*0.580); ctx.lineTo(i/80*cw - 0.004*cw, ch*0.598); }
+  ctx.stroke();
+  ctx.fillStyle = cstr(mixc([120,112,100],[14,18,28],1-day),1);
+  ctx.fillRect(0, ch*0.598, cw, ch*0.007);
+  // Barandilla
+  ctx.strokeStyle = cstr(mixc(TRIM,[70,78,96],1-day),0.95); ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(0, ch*0.586); ctx.lineTo(cw, ch*0.586);
+  for(var j=0; j<=50; j++){ ctx.moveTo(j/50*cw, ch*0.586); ctx.lineTo(j/50*cw, ch*0.599); }
+  ctx.stroke();
 }
 function silhouetteRow(base, top, n, x0, x1){
   var seg=(x1-x0)/n;
@@ -525,6 +544,18 @@ function drawWater(st){
   ctx.fillStyle=rg;
   ctx.fillRect(0,hor,cw,ch-hor);
 
+  var hrf = ctx.createLinearGradient(0,hor,0,hor+ch*0.17);
+  var refC = mixc(WALL,[60,70,96],1-day);
+  hrf.addColorStop(0, cstr(refC, 0.42));
+  hrf.addColorStop(0.35, cstr(mixc(refC,ROOF,0.5), 0.22));
+  hrf.addColorStop(1, cstr(refC, 0));
+  ctx.fillStyle = hrf;
+  ctx.fillRect(0,hor,cw,ch*0.17);
+  for(var lr=0; lr<9; lr++){
+    ctx.fillStyle = cstr(mixc(lr%2 ? [240,236,226] : [190,40,44],[40,40,60],(1-day)*0.7), 0.42-lr*0.04);
+    ctx.fillRect(0.150*cw - 0.011*cw + Math.sin(simT*1.5+lr*1.3)*0.003*cw, hor+ch*(0.022+lr*0.017), 0.022*cw, ch*0.011);
+  }
+
   if(st.sun.visible && st.day>0.05){
     for(var i=0;i<7;i++){
       var fy = hor + (ch-hor)*i/7;
@@ -552,12 +583,12 @@ function drawWater(st){
   ctx.globalAlpha = 1;
   ctx.restore();
 
-  ctx.fillStyle = cstr(mixc([70,150,190],[10,20,40],1-day),1);
-  for(var i=0;i<3;i++){
-    var fx = ((simT*(0.04+chop*0.03)+i*0.33)%1.4-0.2)*cw;
-    var fy = ch*(0.78+i*0.06);
+  ctx.fillStyle = cstr(mixc([200,230,244],[40,60,90],1-day),0.16);
+  for(var i=0;i<4;i++){
+    var fx = ((simT*(0.03+chop*0.02)+i*0.37)%1.5-0.25)*cw;
+    var fy = ch*(0.70+i*0.075);
     ctx.beginPath();
-    ctx.ellipse(fx, fy, cw*0.2, ch*0.012, 0, 0, TAU);
+    ctx.ellipse(fx, fy, cw*(0.16+i*0.03), ch*0.006, 0, 0, TAU);
     ctx.fill();
   }
 }
@@ -568,14 +599,14 @@ function drawWindowReflections(day){
   var alphaRefl = (1-day)*0.5;
   for(var i=0;i<windows.length;i++){
     var wp=windows[i];
-    if(!wp.on) continue;
-    var gy = hor + (ch-hor)*(0.30 + rnd(i)*0.45);
-    var gh = (ch-hor)*0.22;
+    if(!wp.lit) continue;
+    var gy = hor + (ch-hor)*(0.01 + rnd(i)*0.07);
+    var gh = (ch-hor)*(0.16 + rnd(i+3.1)*0.16);
     var gg = ctx.createLinearGradient(0,gy,0,gy+gh);
-    gg.addColorStop(0, cstr(LAMP_GLOW, alphaRefl*0.55));
+    gg.addColorStop(0, cstr(LAMP_GLOW, alphaRefl*0.4));
     gg.addColorStop(1, cstr(LAMP_GLOW,0));
     ctx.fillStyle = gg;
-    ctx.fillRect(wp.x + wp.w*0.4, gy, wp.w*0.2, gh);
+    ctx.fillRect(wp.x + wp.w*0.2 + Math.sin(simT*1.4+i)*wp.w*0.12, gy, wp.w*0.6, gh);
   }
 }
 
@@ -590,243 +621,310 @@ function drawGoldLights(pts, day){
   ctx.stroke();
 }
 
-function drawTower(twX, day){
-  var wsh = mixc(WALL_SH,[16,24,38],1-day);
-  var trim = mixc(TRIM,[24,32,46],1-day);
-  var roof = mixc(ROOF,[12,18,32],1-day);
-  var twB=0.208*ch, twW2=0.044*cw;
-  var twWallTop=0.112*ch, twRoofTop=0.062*ch;
-  ctx.fillStyle = cstr(wsh,1);
+function hotelPal(day){
+  var n = 1-day;
+  return {
+    wall: mixc(WALL,[34,42,60],n), wallS: mixc(WALL_SH,[22,30,46],n), wallL: mixc([246,240,224],[46,54,72],n),
+    trim: mixc(TRIM,[70,78,96],n), roof: mixc(ROOF,[14,20,34],n), roofD: mixc(ROOF_D,[9,14,25],n),
+    roofL: mixc([98,128,150],[24,32,50],n), glass: mixc(NAVY,[22,28,46],n), line: mixc([172,160,138],[12,18,30],n)
+  };
+}
+// Lamas horizontales de la fachada de madera
+function clapboard(x, y, w, h, P){
+  ctx.strokeStyle = cstr(P.line,0.32); ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(twX-twW2*0.72, twB);
-  ctx.lineTo(twX-twW2/2, twWallTop);
-  ctx.lineTo(twX+twW2/2, twWallTop);
-  ctx.lineTo(twX+twW2*0.72, twB);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = cstr(trim,0.8);
-  ctx.lineWidth = 1;
+  for(var yy=y+0.008*ch; yy<y+h; yy+=0.008*ch){ ctx.moveTo(x,yy); ctx.lineTo(x+w,yy); }
   ctx.stroke();
-  ctx.fillStyle = cstr(mixc(NAVY,[26,34,52],1-day),1);
-  ctx.fillRect(twX-twW2*0.26, twB-0.058*ch, twW2*0.52, 0.026*ch);
-  ctx.fillRect(twX-twW2*0.26, twB-0.088*ch, twW2*0.52, 0.026*ch);
-  ctx.fillStyle = cstr(trim,0.85);
-  ctx.fillRect(twX-twW2*0.55, twWallTop-0.012*ch, twW2*1.05, 0.012*ch);
-  ctx.fillStyle = cstr(roof,1);
+}
+function roofBand(x0, x1, yt, yb, P){
+  var g = ctx.createLinearGradient(0,yt,0,yb);
+  g.addColorStop(0,cstr(P.roofL)); g.addColorStop(0.45,cstr(P.roof)); g.addColorStop(1,cstr(P.roofD));
+  ctx.fillStyle = g;
+  ctx.fillRect(x0, yt, x1-x0, yb-yt);
+  ctx.strokeStyle = cstr(P.roofD,0.5); ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(twX-twW2*0.6, twWallTop);
-  ctx.lineTo(twX, twRoofTop);
-  ctx.lineTo(twX+twW2*0.6, twWallTop);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = cstr(trim,0.7);
-  ctx.lineWidth = 1;
+  for(var yy=yt+0.008*ch; yy<yb; yy+=0.008*ch){ ctx.moveTo(x0,yy); ctx.lineTo(x1,yy); }
   ctx.stroke();
-  ctx.strokeStyle = cstr(mixc([136,148,176],[42,54,76],1-day),0.6);
-  ctx.lineWidth = 1;
+}
+function drawCornice(x0, x1, y, P){
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(x0, y-0.008*ch, x1-x0, 0.012*ch);
+  ctx.fillStyle = cstr(P.line,0.55);
+  ctx.fillRect(x0, y+0.004*ch, x1-x0, 0.004*ch);
+}
+function drawBalustrade(x0, x1, y, h, P){
+  ctx.strokeStyle = cstr(P.trim); ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(twX-twW2*0.2, twRoofTop+0.008*ch); ctx.lineTo(twX-twW2*0.2, twWallTop);
-  ctx.moveTo(twX+twW2*0.2, twRoofTop+0.008*ch); ctx.lineTo(twX+twW2*0.2, twWallTop);
+  for(var xx=x0; xx<=x1+0.5; xx+=0.0055*cw){ ctx.moveTo(xx,y); ctx.lineTo(xx,y-h); }
   ctx.stroke();
-  ctx.strokeStyle = cstr(mixc([92,92,92],[22,22,28],1-day),1);
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(twX, twRoofTop); ctx.lineTo(twX, twRoofTop-0.026*ch); ctx.stroke();
-  ctx.fillStyle = cstr(LAMP,1);
-  ctx.beginPath(); ctx.arc(twX, twRoofTop-0.029*ch, 2.2, 0, TAU); ctx.fill();
-  drawGoldLights([[twX-twW2*0.6,twWallTop],[twX,twRoofTop],[twX+twW2*0.6,twWallTop]], day);
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(x0, y-h-0.003*ch, x1-x0, 0.004*ch);
 }
 
-function drawWing(xl, xr, day){
-  var wb = mixc(WALL,[22,30,46],1-day);
-  var wsh = mixc(WALL_SH,[16,24,38],1-day);
-  var trim = mixc(TRIM,[24,32,46],1-day);
-  var roof = mixc(ROOF,[12,18,32],1-day);
-  var roofD = mixc(ROOF_D,[9,14,25],1-day);
-  var eaveW=0.228*ch, ridgeW=0.188*ch, base=0.50*ch;
-  ctx.fillStyle = cstr(wsh,1);
-  ctx.fillRect(xl, ridgeW, xr-xl, base-ridgeW);
-  var rg = ctx.createLinearGradient(0,ridgeW,0,eaveW);
-  rg.addColorStop(0,cstr(roof));
-  rg.addColorStop(1,cstr(roofD));
-  ctx.fillStyle = rg;
-  ctx.fillRect(xl, ridgeW, xr-xl, eaveW-ridgeW);
-  ctx.fillStyle = cstr(roofD,1);
-  ctx.fillRect(xl, eaveW-0.007*ch, xr-xl, 0.007*ch);
-  ctx.strokeStyle = cstr(mixc([136,148,176],[42,54,76],1-day),0.9);
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(xl+0.02*cw, ridgeW); ctx.lineTo(xr-0.02*cw, ridgeW);
-  ctx.stroke();
-  ctx.fillStyle = cstr(wb,0.28);
-  ctx.fillRect(xl, eaveW, 0.02*cw, base-eaveW);
-  ctx.fillRect(xr-0.02*cw, eaveW, 0.02*cw, base-eaveW);
-  ctx.fillStyle = cstr(trim,0.85);
-  ctx.fillRect(xl, eaveW-0.008*ch, xr-xl, 0.010*ch);
-  var jx = Math.abs(xl-0.5*cw) < Math.abs(xr-0.5*cw) ? xl : xr;
-  drawGable(jx, 0.045*cw, ridgeW-0.005*ch, eaveW+0.004*ch, eaveW-0.034*ch, day);
-  for(var di=1;di<=4;di++){
-    drawDormer(xl + di*(xr-xl)/5, ridgeW, day);
+function drawTower(twX, P, day){
+  var hw = 0.038*cw, yb = 0.214*ch, yt = 0.132*ch;
+  var lit = day<0.5;
+  var g = ctx.createLinearGradient(twX-hw,0,twX+hw,0);
+  g.addColorStop(0,cstr(P.wallL)); g.addColorStop(0.6,cstr(P.wall)); g.addColorStop(1,cstr(P.wallS));
+  ctx.fillStyle = g;
+  ctx.fillRect(twX-hw, yt, hw*2, yb-yt);
+  clapboard(twX-hw, yt, hw*2, yb-yt, P);
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(twX-hw, yt, 0.005*cw, yb-yt);
+  ctx.fillRect(twX+hw-0.005*cw, yt, 0.005*cw, yb-yt);
+  var tww = 0.0168*cw, twh = 0.031*ch;
+  drawWindow(twX-0.020*cw-tww/2, 0.160*ch, tww, twh, lit && rnd(twX)>0.4, day, false);
+  drawWindow(twX+0.020*cw-tww/2, 0.160*ch, tww, twh, lit && rnd(twX*1.7)>0.4, day, false);
+  drawCornice(twX-hw-0.005*cw, twX+hw+0.005*cw, yt, P);
+  drawBalustrade(twX-hw, twX+hw, yt-0.008*ch, 0.014*ch, P);
+  // Linterna
+  var lw = 0.022*cw, ly0 = yt-0.008*ch, ly1 = 0.084*ch;
+  var lg = ctx.createLinearGradient(twX-lw,0,twX+lw,0);
+  lg.addColorStop(0,cstr(P.wallL)); lg.addColorStop(0.55,cstr(P.wall)); lg.addColorStop(1,cstr(P.wallS));
+  ctx.fillStyle = lg;
+  ctx.fillRect(twX-lw, ly1, lw*2, ly0-ly1);
+  for(var k=-1; k<=1; k++){
+    var ax = twX + k*lw*0.62, ar = lw*0.2, ay = ly1+0.016*ch;
+    ctx.beginPath();
+    ctx.moveTo(ax-ar, ly0-0.004*ch); ctx.lineTo(ax-ar, ay);
+    ctx.arc(ax, ay, ar, Math.PI, 0);
+    ctx.lineTo(ax+ar, ly0-0.004*ch); ctx.closePath();
+    ctx.fillStyle = lit ? cstr(LAMP,0.95) : cstr(P.glass);
+    ctx.fill();
+    ctx.strokeStyle = cstr(P.trim); ctx.lineWidth = 1.2; ctx.stroke();
   }
+  if(lit){
+    var tg = ctx.createRadialGradient(twX, (ly0+ly1)/2, 2, twX, (ly0+ly1)/2, 0.05*cw);
+    tg.addColorStop(0,cstr(LAMP_GLOW,0.4)); tg.addColorStop(1,cstr(LAMP_GLOW,0));
+    ctx.fillStyle = tg;
+    ctx.beginPath(); ctx.arc(twX, (ly0+ly1)/2, 0.05*cw, 0, TAU); ctx.fill();
+  }
+  drawCornice(twX-lw-0.004*cw, twX+lw+0.004*cw, ly1, P);
+  // Cubierta de la cúpula
+  var ry0 = ly1-0.008*ch, ryp = 0.036*ch;
+  var rg = ctx.createLinearGradient(twX-lw,0,twX+lw,0);
+  rg.addColorStop(0,cstr(P.roofL)); rg.addColorStop(0.5,cstr(P.roof)); rg.addColorStop(1,cstr(P.roofD));
+  ctx.fillStyle = rg;
+  ctx.beginPath();
+  ctx.moveTo(twX-lw*1.2, ry0);
+  ctx.quadraticCurveTo(twX-lw*0.3, ry0-0.014*ch, twX, ryp);
+  ctx.quadraticCurveTo(twX+lw*0.3, ry0-0.014*ch, twX+lw*1.2, ry0);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = cstr(mixc([92,92,92],[22,22,28],1-day),1);
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(twX, ryp+0.004*ch); ctx.lineTo(twX, 0.010*ch); ctx.stroke();
+  ctx.fillStyle = cstr(LAMP,1);
+  ctx.beginPath(); ctx.arc(twX, ryp, 2.6, 0, TAU); ctx.fill();
+  drawGoldLights([[twX-hw,yt-0.010*ch],[twX+hw,yt-0.010*ch]], day);
+  drawGoldLights([[twX-lw*1.2,ry0],[twX+lw*1.2,ry0]], day);
+}
+
+function drawWing(xl, xr, P, day){
+  var eaveW=0.232*ch, ridgeW=0.186*ch, base=0.505*ch;
+  var g = ctx.createLinearGradient(0,eaveW,0,base);
+  g.addColorStop(0,cstr(P.wallS)); g.addColorStop(0.12,cstr(P.wall)); g.addColorStop(1,cstr(P.wallS));
+  ctx.fillStyle = g;
+  ctx.fillRect(xl, eaveW, xr-xl, base-eaveW);
+  clapboard(xl, eaveW, xr-xl, base-eaveW, P);
+  roofBand(xl, xr, ridgeW, eaveW, P);
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(xl, ridgeW-0.003*ch, xr-xl, 0.004*ch);
+  drawCornice(xl, xr, eaveW, P);
+  var dfr = [0.08,0.24,0.76,0.92];
+  for(var di=0; di<4; di++) drawDormer(xl + dfr[di]*(xr-xl), eaveW-0.010*ch, 0.85, P, day);
+  // Pabellón central con frontón
+  var pc = (xl+xr)/2, ph = 0.052*cw;
+  ctx.fillStyle = cstr(P.wallL,0.6);
+  ctx.fillRect(pc-ph, eaveW, ph*2, base-eaveW);
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(pc-ph, eaveW, 0.004*cw, base-eaveW);
+  ctx.fillRect(pc+ph-0.004*cw, eaveW, 0.004*cw, base-eaveW);
+  drawGable(pc, ph+0.006*cw, 0.158*ch, eaveW+0.004*ch, P, day);
+  ctx.fillStyle = cstr(P.trim,0.9);
+  ctx.fillRect(xl, 0.452*ch, xr-xl, 0.006*ch);
 }
 
 function drawHotel(st){
-  var day = st.day;
-  var wb = mixc(WALL,[22,30,46],1-day);
-  var wsh = mixc(WALL_SH,[16,24,38],1-day);
-  var trim = mixc(TRIM,[24,32,46],1-day);
-  var roof = mixc(ROOF,[12,18,32],1-day);
-  var roofD = mixc(ROOF_D,[9,14,25],1-day);
+  var day = st.day, lit = day<0.5;
+  var P = hotelPal(day);
   var wallL=0.26*cw, wallR=0.74*cw;
-  var eave=0.214*ch, base=0.50*ch, ridgeY=0.156*ch;
+  var eave=0.214*ch, base=0.50*ch, ridgeY=0.150*ch;
 
   ctx.save();
 
-  ctx.fillStyle = cstr(mixc([60,92,64],[6,10,18],1-day),0.55);
-  ctx.beginPath();
-  ctx.ellipse(cw*0.5, ch*0.556, 0.5*cw, 0.02*ch, 0, 0, TAU);
-  ctx.fill();
+  drawWing(0, 0.26*cw, P, day);
+  drawWing(0.74*cw, cw, P, day);
 
-  drawWing(0, 0.26*cw, day);
-  drawWing(0.74*cw, cw, day);
-
-  ctx.fillStyle = cstr(wsh,1);
+  // Cuerpo central
+  var g = ctx.createLinearGradient(0,eave,0,base);
+  g.addColorStop(0,cstr(P.wallS)); g.addColorStop(0.1,cstr(P.wall)); g.addColorStop(1,cstr(P.wallS));
+  ctx.fillStyle = g;
   ctx.fillRect(wallL, eave, wallR-wallL, base-eave);
-  ctx.fillStyle = cstr(wb,0.28);
-  ctx.fillRect(wallL, eave, 0.035*cw, base-eave);
-  ctx.fillRect(wallR-0.035*cw, eave, 0.035*cw, base-eave);
-  ctx.fillStyle = cstr(trim,0.85);
-  ctx.fillRect(wallL, eave-0.010*ch, wallR-wallL, 0.012*ch);
-  ctx.fillRect(wallL, 0.353*ch, wallR-wallL, 0.010*ch);
+  ctx.fillStyle = cstr(P.wallL,0.65);
+  ctx.fillRect(0.395*cw, eave, 0.21*cw, base-eave);
+  clapboard(wallL, eave, wallR-wallL, base-eave, P);
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(wallL, 0.355*ch, wallR-wallL, 0.007*ch);
+  var pil = [0.26,0.338,0.395,0.600,0.657,0.735];
+  for(var pi=0; pi<pil.length; pi++) ctx.fillRect(pil[pi]*cw, eave, 0.005*cw, base-eave);
 
-  var rg = ctx.createLinearGradient(0, ridgeY, 0, eave);
-  rg.addColorStop(0, cstr(roof));
-  rg.addColorStop(1, cstr(roofD));
-  ctx.fillStyle = rg;
-  ctx.fillRect(wallL, ridgeY, wallR-wallL, eave-ridgeY);
-  ctx.fillStyle = cstr(roofD,1);
-  ctx.fillRect(wallL, eave-0.008*ch, wallR-wallL, 0.008*ch);
+  roofBand(wallL, wallR, ridgeY, eave, P);
+  drawBalustrade(wallL+0.085*cw, wallR-0.085*cw, ridgeY+0.002*ch, 0.014*ch, P);
+  drawCornice(wallL, wallR, eave, P);
+  var dxs = [0.362,0.402,0.598,0.638];
+  for(var di=0; di<dxs.length; di++) drawDormer(dxs[di]*cw, eave-0.010*ch, 1, P, day);
 
-  var pedX=0.50*cw, pedHalf=0.105*cw, pBase=eave+0.006*ch, pPeak=eave-0.108*ch;
-  ctx.fillStyle = cstr(roof,1);
-  ctx.beginPath();
-  ctx.moveTo(pedX-pedHalf, pBase);
-  ctx.lineTo(pedX+pedHalf, pBase);
-  ctx.lineTo(pedX, pPeak);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = cstr(trim,0.95);
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  var ocY = (pBase+pPeak)*0.5+0.006*ch;
-  ctx.fillStyle = cstr(mixc(NAVY,[26,34,52],1-day),1);
-  ctx.beginPath(); ctx.arc(pedX, ocY, 0.021*cw, 0, TAU); ctx.fill();
-  ctx.strokeStyle = cstr(trim,0.9);
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(pedX, ocY, 0.021*cw, 0, TAU); ctx.stroke();
-  ctx.beginPath(); ctx.arc(pedX, ocY, 0.008*cw, 0, TAU); ctx.stroke();
+  // Frontón central con ventana palladiana
+  var pedX=0.50*cw, pedHalf=0.108*cw, pBase=eave+0.004*ch, pPeak=0.100*ch;
+  drawGable(pedX, pedHalf, pPeak, pBase, P, day, true);
 
-  drawDormer(0.335*cw, ridgeY, day);
-  drawDormer(0.415*cw, ridgeY, day);
-  drawDormer(0.585*cw, ridgeY, day);
-  drawDormer(0.660*cw, ridgeY, day);
-
-  drawTower(0.690*cw, day);
-  ctx.save();
-  ctx.translate(cw, 0);
-  ctx.scale(-1, 1);
-  drawTower(0.690*cw, day);
-  ctx.restore();
-  drawUsFlag(0.690*cw+1.5, 0.062*ch-0.023*ch, 0.031*cw, S.wind, simT*2.4+2.1);
-  drawUsFlag(0.310*cw+1.5, 0.062*ch-0.023*ch, 0.031*cw, S.wind, simT*2.4+4.7);
+  drawTower(0.300*cw, P, day);
+  drawTower(0.700*cw, P, day);
+  drawUsFlag(0.700*cw+1.5, 0.012*ch, 0.031*cw, S.wind, simT*2.4+2.1);
+  drawUsFlag(0.300*cw+1.5, 0.012*ch, 0.031*cw, S.wind, simT*2.4+4.7);
   drawGoldLights([[pedX-pedHalf,pBase],[pedX,pPeak],[pedX+pedHalf,pBase]], day);
   drawGoldLights([[wallL,eave+0.003*ch],[wallR,eave+0.003*ch]], day);
-  drawGoldLights([[0,0.228*ch+0.003*ch],[0.26*cw,0.228*ch+0.003*ch]], day);
-  drawGoldLights([[0.74*cw,0.228*ch+0.003*ch],[cw,0.228*ch+0.003*ch]], day);
+  drawGoldLights([[0,0.232*ch+0.003*ch],[0.26*cw,0.232*ch+0.003*ch]], day);
+  drawGoldLights([[0.74*cw,0.232*ch+0.003*ch],[cw,0.232*ch+0.003*ch]], day);
 
   for(var i=0;i<windows.length;i++){
     var wp = windows[i];
-    var lit = wp.lit;
-    drawWindow(wp.x, wp.y, wp.w, wp.h, lit, day);
+    drawWindow(wp.x, wp.y, wp.w, wp.h, wp.lit, day, wp.aw);
   }
 
-  var pTop = 0.492*ch, pBot = 0.545*ch;
-  ctx.fillStyle = cstr(mixc(TRIM,[24,32,46],1-day),0.85);
-  ctx.fillRect(wallL+0.02*cw, pTop, wallR-wallL-0.04*cw, pBot-pTop);
-  ctx.lineWidth = 1;
-  var colN = 10, colStep = (wallR-wallL)/colN;
-  for(var ci=0;ci<colN;ci++){
-    var cx = wallL + ci*colStep + colStep/2;
-    ctx.fillStyle = cstr(mixc([238,234,224],[28,36,50],1-day),1);
-    ctx.fillRect(cx-0.007*cw, pTop+0.006*ch, 0.014*cw, pBot-pTop-0.010*ch);
-  }
-  ctx.strokeStyle = cstr(mixc([150,146,134],[48,52,62],1-day),1);
+  // Galería porticada
+  var vx0 = wallL+0.012*cw, vx1 = wallR-0.012*cw;
+  var vy0 = 0.458*ch, vy1 = 0.472*ch, vf = 0.488*ch, vb = 0.540*ch;
+  var vg = ctx.createLinearGradient(0,vy0,0,vy1);
+  vg.addColorStop(0,cstr(P.roofL)); vg.addColorStop(1,cstr(P.roofD));
+  ctx.fillStyle = vg;
   ctx.beginPath();
-  ctx.moveTo(wallL+0.022*cw, pBot-0.016*ch); ctx.lineTo(wallR-0.022*cw, pBot-0.016*ch);
-  ctx.moveTo(wallL+0.022*cw, pBot-0.030*ch); ctx.lineTo(wallR-0.022*cw, pBot-0.030*ch);
-  ctx.stroke();
-  ctx.fillStyle = cstr(mixc([220,214,202],[34,40,52],1-day),1);
-  for(var sti=0;sti<3;sti++){
-    var sy = pBot + sti*0.012*ch;
-    var swx = 0.10*cw - 2*sti*0.012*cw;
-    ctx.fillRect(cw*0.5-swx/2, sy, swx, 0.012*ch);
-  }
+  ctx.moveTo(vx0+0.008*cw, vy0); ctx.lineTo(vx1-0.008*cw, vy0);
+  ctx.lineTo(vx1+0.004*cw, vy1); ctx.lineTo(vx0-0.004*cw, vy1);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = cstr(mixc([62,74,92],[16,20,30],1-day),1);
+  ctx.fillRect(vx0, vf, vx1-vx0, vb-vf);
   if(day<0.55){
-    ctx.fillStyle = cstr(LAMP,0.9);
-    ctx.beginPath(); ctx.arc(cw*0.5-0.07*cw, pTop+0.01*ch, ch*0.012,0,TAU); ctx.fill();
-    ctx.beginPath(); ctx.arc(cw*0.5+0.07*cw, pTop+0.01*ch, ch*0.012,0,TAU); ctx.fill();
+    var ig = ctx.createLinearGradient(0,vf,0,vb);
+    ig.addColorStop(0,cstr(LAMP,0.62)); ig.addColorStop(1,cstr(LAMP_GLOW,0.25));
+    ctx.fillStyle = ig;
+    ctx.fillRect(vx0, vf, vx1-vx0, vb-vf);
+  } else {
+    ctx.fillStyle = cstr(mixc(GLASS_DAY,[60,80,104],0.55),0.55);
+    var dn = 16, ds = (vx1-vx0)/dn;
+    for(var dj=0; dj<dn; dj++) ctx.fillRect(vx0+dj*ds+ds*0.25, vf+0.008*ch, ds*0.5, vb-vf-0.008*ch);
+  }
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(vx0-0.002*cw, vy1, vx1-vx0+0.004*cw, vf-vy1);
+  var cn = 16, cs = (vx1-vx0)/cn;
+  for(var ci=0; ci<=cn; ci++){
+    var cx = vx0 + ci*cs;
+    ctx.fillStyle = cstr(P.trim);
+    ctx.fillRect(cx-0.003*cw, vf, 0.006*cw, vb-vf);
+    ctx.fillStyle = cstr(P.line,0.35);
+    ctx.fillRect(cx+0.001*cw, vf, 0.002*cw, vb-vf);
+    ctx.fillStyle = cstr(P.trim);
+    ctx.fillRect(cx-0.0045*cw, vf, 0.009*cw, 0.004*ch);
+  }
+  drawBalustrade(vx0, pedX-0.037*cw, vb, 0.018*ch, P);
+  drawBalustrade(pedX+0.037*cw, vx1, vb, 0.018*ch, P);
+  ctx.fillStyle = cstr(mixc([206,198,182],[36,42,56],1-day),1);
+  ctx.fillRect(vx0-0.004*cw, vb, vx1-vx0+0.008*cw, 0.010*ch);
+  for(var sti=0; sti<4; sti++){
+    var sy = vb + sti*0.0105*ch;
+    var swx = (0.074 + sti*0.012)*cw;
+    ctx.fillStyle = cstr(mixc([232,226,212],[48,54,68],1-day),1);
+    ctx.fillRect(pedX-swx/2, sy, swx, 0.0105*ch);
+    ctx.fillStyle = cstr(P.line,0.5);
+    ctx.fillRect(pedX-swx/2, sy+0.008*ch, swx, 0.0025*ch);
   }
 
-  ctx.fillStyle = cstr(mixc([240,235,222],[34,40,54],1-day),0.95);
-  ctx.fillRect(cw*0.5-0.19*cw, ch*0.462, 0.38*cw, ch*0.020);
-  ctx.strokeStyle = cstr(mixc([120,116,104],[40,46,56],1-day),1);
-  ctx.lineWidth = 1;
-  ctx.strokeRect(cw*0.5-0.19*cw, ch*0.462, 0.38*cw, ch*0.020);
-  ctx.fillStyle = cstr(mixc(NAVY,[22,28,46],1-day),1);
-  ctx.font = '700 '+Math.max(12,ch*0.017)+'px Poppins, sans-serif';
+  // Rótulo
+  var sn = smooth(0.4,0.15,day);
+  ctx.fillStyle = cstr(mixc([250,246,234],[52,58,74],sn),1);
+  ctx.fillRect(pedX-0.10*cw, 0.462*ch, 0.20*cw, 0.026*ch);
+  ctx.strokeStyle = cstr(mixc(NAVY,[90,100,122],sn),1);
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(pedX-0.10*cw+2, 0.462*ch+2, 0.20*cw-4, 0.026*ch-4);
+  ctx.fillStyle = cstr(mixc(NAVY,[200,206,222],sn),1);
+  ctx.font = '700 '+Math.max(11,ch*0.0165)+'px Poppins, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('NEWPORT BAY CLUB', cw*0.5, ch*0.472);
+  ctx.fillText('NEWPORT BAY CLUB', pedX, 0.4755*ch);
+
+  // Setos
+  var hd = mixc(TREE_D,[14,24,40],1-day*0.85), hl = mixc(TREE,[20,34,54],1-day*0.85);
+  for(var hb=0; hb<64; hb++){
+    var hx = (hb+0.5)/64*cw;
+    if(Math.abs(hx-pedX) < 0.058*cw) continue;
+    var inC = hx>vx0-0.01*cw && hx<vx1+0.01*cw;
+    var hy = (inC ? 0.556 : 0.514)*ch, hr = (0.0085 + rnd(hb*4.3)*0.004)*cw;
+    ctx.fillStyle = cstr(hb%2 ? hd : hl,1);
+    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, TAU); ctx.fill();
+  }
 
   ctx.restore();
 }
-function drawGable(cx, half, peakY, baseY, oy, day){
-  var roof = mixc(ROOF,[12,18,32],1-day);
-  var trim = mixc(TRIM,[24,32,46],1-day);
-  ctx.fillStyle = cstr(roof,1);
+function drawGable(cx, half, peakY, baseY, P, day, big){
+  ctx.save();
   ctx.beginPath();
-  ctx.moveTo(cx-half, baseY);
-  ctx.lineTo(cx+half, baseY);
-  ctx.lineTo(cx, peakY);
+  ctx.moveTo(cx-half, baseY); ctx.lineTo(cx+half, baseY); ctx.lineTo(cx, peakY);
+  ctx.closePath();
+  ctx.fillStyle = cstr(P.wallL); ctx.fill();
+  ctx.clip();
+  clapboard(cx-half, peakY, half*2, baseY-peakY, P);
+  ctx.restore();
+  ctx.strokeStyle = cstr(P.roof); ctx.lineWidth = big ? 9 : 6; ctx.lineJoin = 'miter';
+  ctx.beginPath(); ctx.moveTo(cx-half-0.004*cw, baseY); ctx.lineTo(cx, peakY-0.004*ch); ctx.lineTo(cx+half+0.004*cw, baseY); ctx.stroke();
+  ctx.strokeStyle = cstr(P.trim); ctx.lineWidth = big ? 4 : 2.5;
+  ctx.beginPath(); ctx.moveTo(cx-half, baseY); ctx.lineTo(cx, peakY+0.004*ch); ctx.lineTo(cx+half, baseY); ctx.stroke();
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(cx-half, baseY-0.004*ch, half*2, 0.008*ch);
+  var lit = day<0.5;
+  var hh = baseY-peakY, r = big ? 0.016*cw : 0.0095*cw, wy = baseY - hh*0.30;
+  ctx.fillStyle = lit ? cstr(LAMP,0.95) : cstr(mixc(GLASS_DAY,P.glass,0.45));
+  ctx.beginPath();
+  ctx.moveTo(cx-r, wy+r*1.2); ctx.lineTo(cx-r, wy); ctx.arc(cx, wy, r, Math.PI, 0); ctx.lineTo(cx+r, wy+r*1.2);
   ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = cstr(trim,0.95);
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.fillStyle = cstr(mixc(NAVY,[30,38,52],1-day),1);
-  ctx.beginPath(); ctx.arc(cx, oy, 0.0105*cw, 0, TAU); ctx.fill();
-  ctx.strokeStyle = cstr(trim,0.9);
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(cx, oy, 0.0105*cw, 0, TAU); ctx.stroke();
-}
-function drawDormer(cx, ridgeY, day){
-  var roof = mixc(ROOF,[12,18,32],1-day);
-  var trim = mixc(TRIM,[24,32,46],1-day);
-  var w=0.022*cw, h=0.034*ch;
-  ctx.fillStyle = cstr(roof,1);
-  ctx.beginPath();
-  ctx.moveTo(cx-w,ridgeY); ctx.lineTo(cx,ridgeY-h); ctx.lineTo(cx+w,ridgeY); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = cstr(trim,0.8);
+  ctx.strokeStyle = cstr(P.trim); ctx.lineWidth = big ? 2.5 : 1.5; ctx.stroke();
   ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx, wy-r); ctx.lineTo(cx, wy+r*1.2);
+  ctx.moveTo(cx-r, wy); ctx.lineTo(cx+r, wy);
   ctx.stroke();
-  ctx.fillStyle = cstr(trim,0.9);
-  ctx.fillRect(cx-w*0.45, ridgeY-h*0.42, w*0.9, h*0.42);
-  ctx.fillStyle = cstr(mixc(NAVY,[30,38,52],1-day),1);
-  ctx.fillRect(cx-w*0.3, ridgeY-h*0.34, w*0.6, h*0.28);
+  if(big){
+    for(var s=-1; s<=1; s+=2){
+      ctx.fillStyle = lit ? cstr(LAMP,0.9) : cstr(mixc(GLASS_DAY,P.glass,0.45));
+      ctx.fillRect(cx+s*r*1.75-r*0.4, wy, r*0.8, r*1.2);
+      ctx.strokeStyle = cstr(P.trim); ctx.lineWidth = 2;
+      ctx.strokeRect(cx+s*r*1.75-r*0.4, wy, r*0.8, r*1.2);
+    }
+  }
 }
-function drawWindow(x,y,w,h,lit,day){
-  var frame = mixc(TRIM,[28,36,50],1-day);
+function drawDormer(cx, baseY, s, P, day){
+  var w = 0.0115*cw*s, h = 0.030*ch*s;
+  ctx.fillStyle = cstr(P.trim);
+  ctx.fillRect(cx-w, baseY-h, w*2, h);
+  ctx.fillStyle = (day<0.5 && rnd(cx*0.37)>0.55) ? cstr(LAMP,0.95) : cstr(mixc(GLASS_DAY,P.glass,0.5));
+  ctx.fillRect(cx-w*0.62, baseY-h*0.86, w*1.24, h*0.72);
+  ctx.strokeStyle = cstr(P.trim); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx, baseY-h*0.86); ctx.lineTo(cx, baseY-h*0.14); ctx.stroke();
+  ctx.fillStyle = cstr(P.roofD);
+  ctx.beginPath();
+  ctx.moveTo(cx-w*1.3, baseY-h); ctx.lineTo(cx, baseY-h-w*1.05); ctx.lineTo(cx+w*1.3, baseY-h);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = cstr(P.trim,0.9); ctx.lineWidth = 1.2; ctx.stroke();
+}
+function drawWindow(x,y,w,h,lit,day,aw){
+  var frame = mixc(TRIM,[70,78,96],1-day);
   var shut = mixc(SHUT,[10,16,28],1-day);
   var sw2 = w*0.24;
-  ctx.fillStyle = cstr(shut,1);
-  ctx.fillRect(x-sw2, y-h*0.04, sw2, h*1.08);
-  ctx.fillRect(x+w, y-h*0.04, sw2, h*1.08);
+  if(!aw){
+    ctx.fillStyle = cstr(shut,1);
+    ctx.fillRect(x-sw2, y-h*0.04, sw2, h*1.08);
+    ctx.fillRect(x+w, y-h*0.04, sw2, h*1.08);
+  }
   ctx.fillStyle = cstr(frame,1);
-  ctx.fillRect(x, y, w, h);
+  ctx.fillRect(x-w*0.06, y-h*0.06, w*1.12, h*1.12);
   if(lit){
     ctx.fillStyle = cstr(LAMP,1);
     ctx.fillRect(x+w*0.08, y+h*0.08, w*0.84, h*0.84);
@@ -836,14 +934,30 @@ function drawWindow(x,y,w,h,lit,day){
     var gl = mixc(GLASS_DAY, GLASS_DRK, 1-day);
     ctx.fillStyle = cstr(gl,1);
     ctx.fillRect(x+w*0.08, y+h*0.08, w*0.84, h*0.84);
+    ctx.fillStyle = cstr([255,255,255],0.22*day);
+    ctx.beginPath();
+    ctx.moveTo(x+w*0.08, y+h*0.55); ctx.lineTo(x+w*0.55, y+h*0.08); ctx.lineTo(x+w*0.8, y+h*0.08); ctx.lineTo(x+w*0.08, y+h*0.8);
+    ctx.closePath(); ctx.fill();
   }
-  ctx.strokeStyle = cstr(mixc([150,146,134],[30,36,50],1-day),1);
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = cstr(frame,1);
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(x+w/2, y); ctx.lineTo(x+w/2, y+h);
   ctx.moveTo(x, y+h/2); ctx.lineTo(x+w, y+h/2);
   ctx.stroke();
+  ctx.fillStyle = cstr(frame,1);
+  ctx.fillRect(x-w*0.14, y+h*1.04, w*1.28, h*0.09);
+  if(aw){
+    // Toldo de rayas
+    var ax0 = x-w*0.10, ax1 = x+w*1.10, bx0 = x-w*0.24, bx1 = x+w*1.24, ay0 = y-h*0.14, ay1 = y+h*0.34;
+    for(var s=0; s<5; s++){
+      ctx.fillStyle = cstr(mixc(s%2 ? [246,246,240] : [58,98,150],[20,26,42],(1-day)*0.75),1);
+      ctx.beginPath();
+      ctx.moveTo(lerp(ax0,ax1,s/5), ay0); ctx.lineTo(lerp(ax0,ax1,(s+1)/5), ay0);
+      ctx.lineTo(lerp(bx0,bx1,(s+1)/5), ay1); ctx.lineTo(lerp(bx0,bx1,s/5), ay1);
+      ctx.closePath(); ctx.fill();
+    }
+  }
 }
 
 function drawTrees(st){
@@ -862,61 +976,82 @@ function drawTrees(st){
 }
 
 function drawLighthouse(st){
-  var day = st.day;
+  var day = st.day, nt = 1-day;
   var x = 0.150*cw, base = 0.60*ch, top = 0.315*ch;
-  var wB = mixc([200,196,188],[26,34,50],1-day);
-  var rB = mixc([168,36,40],[70,22,22],1-day);
+  var wB = mixc([240,236,226],[50,58,76],nt);
+  var rB = mixc([190,40,44],[84,26,30],nt);
+  var dark = mixc([52,58,66],[12,16,24],nt);
 
-  ctx.fillStyle = cstr(mixc([96,100,106],[18,24,32],1-day),1);
-  for(var rk=0;rk<6;rk++){
-    var rxx = x - 0.035*cw + rk*0.014*cw;
-    var ryy = base + 0.006*ch - Math.abs(rk-2.5)*0.005*ch;
-    ctx.beginPath();
-    ctx.ellipse(rxx, ryy, 0.013*cw, 0.006*ch, 0, 0, TAU);
-    ctx.fill();
+  // Escollera
+  for(var rk=0; rk<11; rk++){
+    var rxx = x + (rk-5)*0.0105*cw + (rnd(rk*3.7)-0.5)*0.006*cw;
+    var ryy = base + 0.012*ch + rnd(rk*5.1)*0.010*ch - (1-Math.abs(rk-5)/5)*0.012*ch;
+    var rr = (0.010 + rnd(rk*7.3)*0.007)*cw;
+    ctx.fillStyle = cstr(mixc(rk%2 ? [120,124,130] : [96,100,108],[16,22,32],nt),1);
+    ctx.beginPath(); ctx.ellipse(rxx, ryy, rr, rr*0.55, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(mixc([164,168,172],[30,38,50],nt),1);
+    ctx.beginPath(); ctx.ellipse(rxx-rr*0.2, ryy-rr*0.2, rr*0.5, rr*0.22, 0, 0, TAU); ctx.fill();
   }
 
-  ctx.fillStyle = cstr(mixc([130,138,142],[16,22,34],1-day),1);
+  // Fuste troncocónico a franjas
+  var wb2 = 0.017*cw, wt2 = 0.0105*cw, n = 5, bandH = (base-top)/n;
+  ctx.save();
   ctx.beginPath();
-  ctx.moveTo(x-0.03*cw, base);
-  ctx.lineTo(x+0.05*cw, base);
-  ctx.lineTo(x+0.04*cw, base+0.08*ch);
-  ctx.lineTo(x-0.02*cw, base+0.08*ch);
+  ctx.moveTo(x-wb2, base); ctx.lineTo(x-wt2, top); ctx.lineTo(x+wt2, top); ctx.lineTo(x+wb2, base);
+  ctx.closePath(); ctx.clip();
+  for(var b=0; b<n; b++){
+    ctx.fillStyle = cstr(b%2===0 ? rB : wB, 1);
+    ctx.fillRect(x-wb2, top+b*bandH, wb2*2, bandH+1);
+  }
+  var sg = ctx.createLinearGradient(x-wb2,0,x+wb2,0);
+  sg.addColorStop(0,cstr([255,255,255],0.10)); sg.addColorStop(0.35,cstr([255,255,255],0.16));
+  sg.addColorStop(0.6,cstr([0,0,0],0)); sg.addColorStop(1,cstr([0,0,0],0.32));
+  ctx.fillStyle = sg;
+  ctx.fillRect(x-wb2, top, wb2*2, base-top);
+  ctx.restore();
+  ctx.fillStyle = cstr(dark,1);
+  ctx.beginPath();
+  ctx.moveTo(x-0.004*cw, base); ctx.lineTo(x-0.004*cw, base-0.022*ch);
+  ctx.arc(x, base-0.022*ch, 0.004*cw, Math.PI, 0); ctx.lineTo(x+0.004*cw, base);
   ctx.closePath(); ctx.fill();
-  for(var i=0;i<4;i++){
-    ctx.fillStyle = cstr(mixc([112,120,126],[12,18,28],1-day),1);
-    ctx.beginPath(); ctx.ellipse(x-0.02*cw+i*0.018*cw, base+0.03*ch, 0.012*cw, 0.008*ch,0,0,TAU); ctx.fill();
-  }
+  ctx.fillStyle = day<0.5 ? cstr(LAMP,0.95) : cstr(dark,1);
+  ctx.fillRect(x-0.0022*cw, top+bandH*1.35, 0.0044*cw, 0.016*ch);
+  ctx.fillRect(x-0.0022*cw, top+bandH*3.3, 0.0044*cw, 0.016*ch);
 
-  var tw = 0.020*cw;
-  var bandH = (base-top)/7;
-  for(var b=0;b<7;b++){
-    ctx.fillStyle = cstr(b%2===0 ? wB : rB, 1);
-    ctx.fillRect(x-tw/2, top+b*bandH, tw, bandH+1);
-  }
-  ctx.fillStyle = cstr(mixc([120,124,128],[18,24,34],1-day),1);
-  ctx.fillRect(x-tw*0.55, top-0.035*ch, tw*1.1, 0.045*ch);
-  ctx.strokeStyle = cstr(mixc([70,74,80],[10,14,22],1-day),1);
-  ctx.lineWidth = 1.4;
+  // Galería, linterna y cúpula
+  var gy = top, gw = 0.019*cw;
+  ctx.fillStyle = cstr(dark,1);
+  ctx.fillRect(x-gw, gy-0.006*ch, gw*2, 0.008*ch);
+  ctx.strokeStyle = cstr(dark,1); ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(x-tw*0.9, top-0.045*ch); ctx.lineTo(x+tw*0.9, top-0.045*ch);
+  ctx.moveTo(x-gw, gy-0.024*ch); ctx.lineTo(x+gw, gy-0.024*ch);
+  for(var gi=0; gi<=8; gi++){ ctx.moveTo(x-gw+gi*gw/4, gy-0.006*ch); ctx.lineTo(x-gw+gi*gw/4, gy-0.024*ch); }
   ctx.stroke();
-  var gl = day<0.55 ? LAMP : mixc([160,190,220],[40,60,90],1-day);
-  ctx.fillStyle = cstr(mixc([90,98,108],[16,22,32],1-day),1);
-  ctx.fillRect(x-tw*0.45, top-0.085*ch, tw*0.9, 0.05*ch);
-  ctx.fillStyle = cstr(mixc(gl,[255,214,140], day<0.55?0.55:0), 0.98);
-  ctx.fillRect(x-tw*0.38, top-0.078*ch, tw*0.76, 0.036*ch);
+  var lw = 0.0095*cw, ly0 = gy-0.006*ch, ly1 = gy-0.060*ch;
+  var on = day<0.55;
+  ctx.fillStyle = on ? cstr([255,236,170],0.98) : cstr(mixc([176,206,230],[40,60,90],nt),0.95);
+  ctx.fillRect(x-lw, ly1, lw*2, ly0-ly1);
+  ctx.strokeStyle = cstr(dark,1); ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  for(var li=0; li<=4; li++){ ctx.moveTo(x-lw+li*lw/2, ly1); ctx.lineTo(x-lw+li*lw/2, ly0); }
+  ctx.stroke();
   ctx.fillStyle = cstr(rB,1);
   ctx.beginPath();
-  ctx.moveTo(x-tw*0.55, top-0.082*ch);
-  ctx.lineTo(x+tw*0.55, top-0.082*ch);
-  ctx.lineTo(x, top-0.135*ch);
+  ctx.moveTo(x-lw*1.35, ly1);
+  ctx.quadraticCurveTo(x-lw*0.9, ly1-0.030*ch, x, ly1-0.040*ch);
+  ctx.quadraticCurveTo(x+lw*0.9, ly1-0.030*ch, x+lw*1.35, ly1);
   ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = cstr(dark,1); ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(x, ly1-0.040*ch); ctx.lineTo(x, ly1-0.062*ch); ctx.stroke();
   ctx.fillStyle = cstr([235,190,70],1);
-  ctx.beginPath(); ctx.arc(x, top-0.135*ch, 0.004*cw,0,TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(x, ly1-0.044*ch, 0.0032*cw, 0, TAU); ctx.fill();
 
-  if(day<0.55){
-    var pX = x, pY = top-0.06*ch;
+  if(on){
+    var pX = x, pY = (ly0+ly1)/2;
+    var hg = ctx.createRadialGradient(pX,pY,1,pX,pY,0.04*cw);
+    hg.addColorStop(0,cstr([255,230,160],0.7)); hg.addColorStop(1,cstr([255,230,160],0));
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(pX,pY,0.04*cw,0,TAU); ctx.fill();
     var sweep = (simT*0.07) % 1;
     var tX = pX + 0.05*cw + sweep*0.78*cw;
     var tY = base + 0.02*ch;
@@ -992,51 +1127,74 @@ function mgmtDucks(dt){
   }
 }
 function drawDucks(st){
-  var day = st.day;
-  for(var i=0;i<ducks.length;i++){
-    var d = ducks[i];
-    var bob = Math.sin(simT*d.bobF + d.ph)*0.004*ch;
-    var a = Math.atan2(d.vy, d.vx);
+  var day = st.day, nt = 1-day;
+  var order = ducks.slice().sort(function(a,b){ return a.y-b.y; });
+  for(var i=0;i<order.length;i++){
+    var d = order[i];
+    var bob = Math.sin(simT*d.bobF + d.ph)*0.003*ch;
+    var s = 0.75 + (d.y/ch-0.62)*1.7;
+    var u = 0.011*cw;
     ctx.save();
     ctx.translate(d.x, d.y+bob);
-    ctx.rotate(a);
-    ctx.fillStyle = 'rgba(255,255,255,0.16)';
-    ctx.beginPath(); ctx.ellipse(0,0,0.013*cw,0.005*ch,0,0,TAU); ctx.fill();
-    ctx.fillStyle = cstr(mixc([140,115,80],[60,50,35],1-day),1);
-    ctx.beginPath(); ctx.ellipse(0,0,0.012*cw,0.007*ch,0,0,TAU); ctx.fill();
-    ctx.fillStyle = cstr(mixc([30,90,60],[18,50,34],1-day),1);
-    ctx.beginPath(); ctx.arc(0.009*cw,-0.005*ch,0.0045*cw,0,TAU); ctx.fill();
-    ctx.fillStyle = cstr(mixc([245,170,60],[140,100,30],1-day),1);
+    ctx.scale((d.vx>=0 ? 1 : -1)*s, s);
+    // estela y reflejo
+    ctx.strokeStyle = cstr([255,255,255],0.35*(0.4+0.6*day)); ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0.0135*cw,-0.005*ch);
-    ctx.lineTo(0.0175*cw,-0.004*ch);
-    ctx.lineTo(0.0135*cw,-0.003*ch);
+    ctx.moveTo(-u*0.9, u*0.28); ctx.lineTo(-u*2.6, u*0.10);
+    ctx.moveTo(-u*0.9, u*0.34); ctx.lineTo(-u*2.8, u*0.62);
+    ctx.moveTo(u*1.1, u*0.32); ctx.quadraticCurveTo(u*1.5, u*0.42, u*1.2, u*0.52);
+    ctx.stroke();
+    ctx.fillStyle = cstr([10,24,40],0.22);
+    ctx.beginPath(); ctx.ellipse(0, u*0.42, u*1.05, u*0.2, 0, 0, TAU); ctx.fill();
+    // cuerpo
+    ctx.fillStyle = cstr(mixc([150,122,88],[52,44,36],nt),1);
+    ctx.beginPath();
+    ctx.moveTo(-u*1.25, -u*0.42);
+    ctx.quadraticCurveTo(-u*0.7, u*0.42, u*0.2, u*0.36);
+    ctx.quadraticCurveTo(u*1.0, u*0.34, u*0.95, -u*0.2);
+    ctx.quadraticCurveTo(u*0.2, -u*0.48, -u*0.6, -u*0.22);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-    ctx.lineWidth = 0.0008*cw;
-    ctx.beginPath(); ctx.arc(0.007*cw,-0.003*ch,0.003*cw,-1.1,1.1); ctx.stroke();
+    ctx.fillStyle = cstr(mixc([112,88,62],[40,34,28],nt),1);
+    ctx.beginPath(); ctx.ellipse(-u*0.15, -u*0.02, u*0.6, u*0.24, -0.15, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(mixc([236,236,230],[90,96,110],nt),1);
+    ctx.fillRect(u*0.62, -u*0.52, u*0.3, u*0.14);
+    // cabeza, pico y ojo
+    ctx.fillStyle = cstr(mixc([30,104,70],[16,48,36],nt),1);
+    ctx.fillRect(u*0.62, -u*0.95, u*0.3, u*0.46);
+    ctx.beginPath(); ctx.arc(u*0.82, -u*1.02, u*0.33, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(mixc([245,186,60],[130,98,34],nt),1);
+    ctx.beginPath();
+    ctx.moveTo(u*1.08, -u*1.10); ctx.lineTo(u*1.55, -u*0.95); ctx.lineTo(u*1.08, -u*0.86);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = cstr([16,16,20],1);
+    ctx.beginPath(); ctx.arc(u*0.92, -u*1.08, u*0.06, 0, TAU); ctx.fill();
     ctx.restore();
   }
 }
 
 function drawLamps(st){
-  var day = st.day;
-  var xs = [0.36*cw, 0.64*cw];
+  var day = st.day, nt = 1-day;
+  var xs = [0.08,0.24,0.36,0.64,0.76,0.92];
+  var on = day<0.6;
   for(var i=0;i<xs.length;i++){
-    var x = xs[i], base = 0.592*ch;
-    var sway = Math.sin(simT*1.6+i)*S.wind/70*0.01*ch;
-    ctx.strokeStyle = cstr(mixc([40,44,52],[10,12,18],1-day),1);
-    ctx.lineWidth = Math.max(2,0.005*cw);
-    ctx.beginPath();
-    ctx.moveTo(x, base); ctx.lineTo(x+sway, base-0.09*ch);
-    ctx.moveTo(x+sway, base-0.09*ch); ctx.lineTo(x+sway+0.012*cw, base-0.115*ch);
-    ctx.stroke();
-    if(day<0.6){
-      var lg = ctx.createRadialGradient(x+sway+0.012*cw, base-0.115*ch, 0, x+sway+0.012*cw, base-0.115*ch, 0.05*cw);
-      lg.addColorStop(0, cstr(LAMP_GLOW,0.85));
+    var x = xs[i]*cw, base = 0.598*ch, h = 0.062*ch;
+    ctx.fillStyle = cstr(mixc([40,52,60],[10,12,18],nt),1);
+    ctx.fillRect(x-1.5, base-h, 3, h);
+    ctx.fillRect(x-4, base-0.006*ch, 8, 0.006*ch);
+    ctx.fillRect(x-0.005*cw, base-h, 0.010*cw, 2);
+    ctx.fillStyle = cstr(on ? [255,236,190] : [236,236,226], on ? 1 : 0.85);
+    ctx.beginPath(); ctx.arc(x, base-h-0.007*ch, 0.0042*cw, 0, TAU); ctx.fill();
+    if(on){
+      var lg = ctx.createRadialGradient(x, base-h-0.007*ch, 0, x, base-h-0.007*ch, 0.045*cw);
+      lg.addColorStop(0, cstr(LAMP_GLOW,0.6));
       lg.addColorStop(1, cstr(LAMP_GLOW,0));
       ctx.fillStyle = lg;
-      ctx.beginPath(); ctx.arc(x+sway+0.012*cw, base-0.115*ch, 0.05*cw,0,TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, base-h-0.007*ch, 0.045*cw,0,TAU); ctx.fill();
+      // reflejo en el agua
+      var rg = ctx.createLinearGradient(0, 0.605*ch, 0, 0.72*ch);
+      rg.addColorStop(0, cstr(LAMP_GLOW,0.45*nt+0.1)); rg.addColorStop(1, cstr(LAMP_GLOW,0));
+      ctx.fillStyle = rg;
+      ctx.fillRect(x-0.003*cw+Math.sin(simT*1.7+i)*0.0015*cw, 0.605*ch, 0.006*cw, 0.115*ch);
     }
   }
 }
@@ -2102,13 +2260,6 @@ function drawScene(st){
     drawTrees(st);
     drawLighthouse(st);
     drawLamps(st);
-    ctx.fillStyle = cstr(mixc(TREE_D,[16,26,42],1-st.day),1);
-    for(var i=0;i<8;i++){
-      var bx = 0.28*cw + i*0.06*cw;
-      ctx.beginPath();
-      ctx.arc(bx + Math.sin(simT*1.3+i)*S.wind/70*0.003*cw, 0.588*ch, 0.011*cw, 0, TAU);
-      ctx.fill();
-    }
   }
   drawSnowLayers(st);
   drawRain();
