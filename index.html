@@ -259,6 +259,7 @@ function makeCloud(kind){
   for(i=0;i<6;i++) cloudsL.push(makeCloud(0));
   for(i=0;i<6;i++) cloudsL.push(makeCloud(2));
 })();
+var moonPos=null;
 var cirrus=[];
 (function(){
   for(var i=0;i<5;i++) cirrus.push({x:Math.random(), y:0.03+Math.random()*0.16, w:0.16+Math.random()*0.2, a:-0.12+Math.random()*0.1, o:0.4+Math.random()*0.6});
@@ -375,9 +376,11 @@ function drawSky(st){
     }
   }
 
+  moonPos = null;
   if(day < 0.3){
     var moon = projectCel(-st.elev/2 + 0.28, st.az + Math.PI);
     if(moon.visible && moon.y < ch*0.6){
+      moonPos = moon;
       var mr = cw*0.028;
       ctx.save();
       ctx.globalAlpha = smooth(0.3,0.12,day);
@@ -812,49 +815,108 @@ function drawWater(st){
   var day = st.day;
   var hor = ch*0.60;
   var wTop = mixc(mixc([90,160,198],[168,206,224],0.35), [14,26,48], 1-day);
-  var wBot = mixc(mixc([44,110,160],[30,84,132],0.5), [6,12,26], 1-day);
+  var wBot = mixc(mixc([36,98,150],[24,74,124],0.5), [5,10,24], 1-day);
   wTop = mixc(wTop,[80,92,112],clamp(S.clouds*0.8,0,1)*0.45);
   wBot = mixc(wBot,[48,58,76],clamp(S.clouds*0.8,0,1)*0.4);
+  wTop = mixc(wTop,[222,160,140],st.golden*0.35);
   var g = ctx.createLinearGradient(0,hor,0,ch);
   g.addColorStop(0,cstr(wTop));
+  g.addColorStop(0.5,cstr(mixc(wTop,wBot,0.6)));
   g.addColorStop(1,cstr(wBot));
   ctx.fillStyle=g;
   ctx.fillRect(0,hor,cw,ch-hor);
+}
 
-  var rg = ctx.createLinearGradient(0,hor,0,ch);
-  var skyRef = mixc([205,232,250],[40,62,96],1-day);
-  rg.addColorStop(0, cstr(skyRef, 0.5));
-  rg.addColorStop(1, cstr(skyRef, 0.18));
-  ctx.fillStyle=rg;
-  ctx.fillRect(0,hor,cw,ch-hor);
-
-  var hrf = ctx.createLinearGradient(0,hor,0,hor+ch*0.17);
-  var refC = mixc(WALL,[60,70,96],1-day);
-  hrf.addColorStop(0, cstr(refC, 0.42));
-  hrf.addColorStop(0.35, cstr(mixc(refC,ROOF,0.5), 0.22));
-  hrf.addColorStop(1, cstr(refC, 0));
-  ctx.fillStyle = hrf;
-  ctx.fillRect(0,hor,cw,ch*0.17);
-  for(var lr=0; lr<9; lr++){
-    ctx.fillStyle = cstr(mixc(lr%2 ? [240,236,226] : [190,40,44],[40,40,60],(1-day)*0.7), 0.42-lr*0.04);
-    ctx.fillRect(0.150*cw - 0.011*cw + Math.sin(simT*1.5+lr*1.3)*0.003*cw, hor+ch*(0.022+lr*0.017), 0.022*cw, ch*0.011);
+// Refleja en el agua lo ya dibujado por encima de la línea yMirror: copia invertida del lienzo
+// a un búfer a media resolución (lo suaviza) y la vuelca en franjas que ondulan
+var mirrorBuf = null, mirrorCtx = null;
+function drawMirror(yMirror, srcH, squash, alpha, wob){
+  var sc = dpr*sceneScale;
+  var bw = Math.max(2, Math.round(cw*0.5)), bh = Math.max(2, Math.round(srcH*0.5));
+  if(!mirrorBuf){ mirrorBuf = document.createElement('canvas'); mirrorCtx = mirrorBuf.getContext('2d'); }
+  if(mirrorBuf.width!==bw || mirrorBuf.height!==bh){ mirrorBuf.width = bw; mirrorBuf.height = bh; }
+  mirrorCtx.setTransform(1,0,0,-1,0,bh);
+  mirrorCtx.clearRect(0,0,bw,bh);
+  mirrorCtx.drawImage(canvas, dpr*sceneOX, dpr*sceneOY + (yMirror-srcH)*sc, cw*sc, srcH*sc, 0, 0, bw, bh);
+  var n = 40, dh = srcH*squash;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  for(var i=0;i<n;i++){
+    var t0 = i/n;
+    var off = Math.sin(simT*1.6 + i*0.9)*wob*(0.3+t0*1.9);
+    ctx.drawImage(mirrorBuf, 0, t0*bh, bw, bh/n, off, yMirror + t0*dh, cw, dh/n + 0.7);
   }
-
-  if(st.sun.visible && st.day>0.05){
-    for(var i=0;i<7;i++){
-      var fy = hor + (ch-hor)*i/7;
-      var span = cw*(0.02 + 0.10*i/7)*(0.5+st.day);
-      ctx.fillStyle = cstr([255,224,150], 0.5 - 0.06*i);
-      ctx.fillRect(st.sun.x-span/2, fy, span, 1.8+2.2*i/7);
+  ctx.restore();
+}
+// Ondas de las gotas de lluvia sobre el agua
+function drawRainRings(x0, x1, y0, y1, count){
+  if(S.rain<0.05) return;
+  var n = Math.floor(count*clamp(S.rain,0,1));
+  ctx.strokeStyle = 'rgb(222,236,250)'; ctx.lineWidth = 1;
+  for(var i=0;i<n;i++){
+    var ph = simT*1.5 + rnd(i*3.3)*7, t = ph%1, k = Math.floor(ph);
+    var x = x0 + rnd(i*7.1+k*13.7)*(x1-x0), fy = rnd(i*5.3+k*9.1), y = y0 + fy*(y1-y0);
+    var r = t*0.011*cw*(0.5+fy);
+    ctx.globalAlpha = (1-t)*0.55;
+    ctx.beginPath(); ctx.ellipse(x, y, r, r*0.3, 0, 0, TAU); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+// Estela de destellos bajo el sol o la luna
+function drawGlitter(gx, y0, y1, col, strength){
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for(var i=0;i<30;i++){
+    var t = i/30, fy = y0 + (y1-y0)*Math.pow(t,1.25);
+    var span = cw*(0.012 + 0.10*t);
+    for(var j=0;j<3;j++){
+      var tw = 0.5+0.5*Math.sin(simT*(2.2+j*0.7) + i*1.9 + j*2.3);
+      var x = gx + (rnd(i*3.1+j*7.7)-0.5)*span*2 + Math.sin(simT*1.3+i+j)*span*0.12;
+      var w = (0.004 + rnd(i*5.3+j)*0.012)*cw*(0.6+t);
+      ctx.fillStyle = cstr(col, strength*(0.6-0.42*t)*tw);
+      ctx.fillRect(x-w/2, fy, w, 1.4+2.2*t);
     }
   }
+  ctx.restore();
+}
 
+function drawWaterFx(st){
+  var day = st.day;
+  var hor = ch*0.60, wh = ch-hor;
   var chop = 0.5 + clamp(S.wind/40,0,1)*1.6;
+  var deep = mixc(mixc([30,88,140],[48,58,76],clamp(S.clouds*0.8,0,1)*0.4), [5,10,24], 1-day);
+  var lightC = mixc([214,236,248],[60,84,120],1-day);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,hor,cw,wh); ctx.clip();
+  drawMirror(hor, hor, 0.66, clamp(0.62 - 0.13*chop - S.rain*0.2, 0.18, 0.58), 0.0022*cw*chop);
+  // el reflejo se pierde con la profundidad
+  var dg = ctx.createLinearGradient(0,hor,0,ch);
+  dg.addColorStop(0, cstr(deep,0));
+  dg.addColorStop(0.55, cstr(deep,0.45));
+  dg.addColorStop(1, cstr(deep,0.85));
+  ctx.fillStyle = dg;
+  ctx.fillRect(0,hor,cw,wh);
+  // bandas de oleaje que rompen el reflejo
+  for(var b=0;b<26;b++){
+    var bt = b/26, by = hor + wh*Math.pow(bt,1.35) + Math.sin(simT*(0.8+chop*0.3)+b*1.3)*0.0025*ch*(0.5+bt*2);
+    ctx.fillStyle = cstr(b%2 ? deep : lightC, (b%2 ? 0.20 : 0.10)*(0.6+0.4*chop));
+    ctx.fillRect(0, by, cw, 1+bt*3.2);
+  }
+  ctx.restore();
+
+  if(st.sun.visible && day>0.12 && st.sun.y < hor){
+    drawGlitter(st.sun.x, hor+0.004*ch, ch, mixc([255,236,170],[255,180,110],st.golden), (0.55+0.45*st.golden)*(1-clamp(S.clouds,0,1)*0.7)*smooth(0.12,0.4,day));
+  }
+  if(moonPos && day<0.3){
+    drawGlitter(moonPos.x, hor+0.004*ch, hor+wh*0.8, [200,216,246], 0.6*smooth(0.3,0.12,day)*(1-clamp(S.clouds,0,1)*0.7));
+  }
+
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for(var r=0;r<12;r++){
-    var yy = hor + (ch-hor)*(r+1)/12;
-    var alpha = 0.10*(1-r/12*0.8)*(0.4+0.6*st.day);
+    var yy = hor + wh*(r+1)/12;
+    var alpha = 0.10*(1-r/12*0.8)*(0.4+0.6*day);
     if(day<0.25) alpha *= 0.5;
     for(var cIdx=0;cIdx<30;cIdx++){
       var bx = (cIdx + 0.5*Math.sin(simT*1.2 + r*1.7 + cIdx*0.8))*cw/30;
@@ -867,14 +929,22 @@ function drawWater(st){
   ctx.globalAlpha = 1;
   ctx.restore();
 
-  ctx.fillStyle = cstr(mixc([200,230,244],[40,60,90],1-day),0.16);
+  ctx.fillStyle = cstr(lightC,0.14);
   for(var i=0;i<4;i++){
     var fx = ((simT*(0.03+chop*0.02)+i*0.37)%1.5-0.25)*cw;
-    var fy = ch*(0.70+i*0.075);
     ctx.beginPath();
-    ctx.ellipse(fx, fy, cw*(0.16+i*0.03), ch*0.006, 0, 0, TAU);
+    ctx.ellipse(fx, ch*(0.70+i*0.075), cw*(0.16+i*0.03), ch*0.006, 0, 0, TAU);
     ctx.fill();
   }
+  // orilla: sombra del muelle y espuma
+  ctx.fillStyle = cstr([0,0,0],0.22);
+  ctx.fillRect(0, hor, cw, 0.006*ch);
+  ctx.fillStyle = cstr(lightC,0.35);
+  for(var f=0;f<40;f++){
+    var ffx = ((f/40 + Math.sin(simT*0.7+f)*0.004) % 1)*cw;
+    ctx.fillRect(ffx, hor+0.007*ch+Math.sin(simT*1.6+f*1.7)*0.0015*ch, cw*0.018, 1.2);
+  }
+  drawRainRings(0, cw, hor+0.01*ch, ch, 90);
 }
 
 function drawWindowReflections(day){
@@ -1285,6 +1355,12 @@ function drawLighthouse(st){
   var wB = mixc([240,236,226],[50,58,76],nt);
   var rB = mixc([190,40,44],[84,26,30],nt);
   var dark = mixc([52,58,66],[12,16,24],nt);
+
+  var hor = 0.60*ch;
+  for(var lr=0; lr<9; lr++){
+    ctx.fillStyle = cstr(mixc(lr%2 ? [240,236,226] : [190,40,44],[40,40,60],nt*0.7), 0.42-lr*0.04);
+    ctx.fillRect(x - 0.011*cw + Math.sin(simT*1.5+lr*1.3)*0.003*cw, hor+ch*(0.022+lr*0.017), 0.022*cw, ch*0.011);
+  }
 
   // Escollera
   for(var rk=0; rk<11; rk++){
@@ -1707,38 +1783,21 @@ function drawCastleScene(st){
   mg.addColorStop(0,cstr(waterD,1)); mg.addColorStop(0.55,cstr(water,1)); mg.addColorStop(1,cstr(waterL,1));
   ctx.fillStyle = mg;
   ctx.fillRect(pcx-prx, pcy-pry, prx*2, pry*2);
-  for(var rf=0; rf<26; rf++){
-    var rfx = (0.36 + rnd(rf*4.7)*0.28)*cw + Math.sin(simT*1.3+rf)*0.004*cw;
-    var rfy = (0.672 + rnd(rf*8.3)*0.05)*ch;
-    ctx.fillStyle = cstr(rf%3 ? rose : coL, lit ? 0.30 : 0.22);
-    ctx.fillRect(rfx, rfy, (0.010+rnd(rf)*0.02)*cw, 0.003*ch);
-  }
-  ctx.strokeStyle = cstr(waterL, 0.55); ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  for(var rp=0; rp<46; rp++){
-    var rpx = pcx - prx + ((rnd(rp*6.1) + simT*0.004*(1+wf*3)) % 1)*prx*2;
-    var rpy = pcy - pry*0.75 + rnd(rp*9.7)*pry*1.7 + Math.sin(simT*1.1+rp)*0.0015*ch;
-    var rpw = (0.006 + rnd(rp*2.3)*0.012)*cw;
-    ctx.moveTo(rpx, rpy); ctx.lineTo(rpx+rpw, rpy);
-  }
-  ctx.stroke();
   ctx.restore();
-  ctx.strokeStyle = cstr(stoneS,1); ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.ellipse(pcx, pcy, prx, pry, 0, 0, Math.PI); ctx.stroke();
-  ctx.strokeStyle = cstr(stoneL,0.9); ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.ellipse(pcx, pcy+2, prx, pry, 0, 0, Math.PI); ctx.stroke();
 
   // Colina
   var hg = ctx.createLinearGradient(0, 0.50*ch, 0, 0.69*ch);
   hg.addColorStop(0, cstr(lawnL,1)); hg.addColorStop(0.5, cstr(lawn,1)); hg.addColorStop(1, cstr(lawnS,1));
+  function hillPath(){
+    ctx.moveTo(0.17*cw, 0.648*ch);
+    ctx.bezierCurveTo(0.24*cw, 0.61*ch, 0.28*cw, 0.515*ch, 0.33*cw, 0.515*ch);
+    ctx.lineTo(0.67*cw, 0.515*ch);
+    ctx.bezierCurveTo(0.72*cw, 0.515*ch, 0.76*cw, 0.61*ch, 0.83*cw, 0.648*ch);
+    ctx.quadraticCurveTo(0.50*cw, 0.695*ch, 0.17*cw, 0.648*ch);
+    ctx.closePath();
+  }
   ctx.fillStyle = hg;
-  ctx.beginPath();
-  ctx.moveTo(0.17*cw, 0.648*ch);
-  ctx.bezierCurveTo(0.24*cw, 0.61*ch, 0.28*cw, 0.515*ch, 0.33*cw, 0.515*ch);
-  ctx.lineTo(0.67*cw, 0.515*ch);
-  ctx.bezierCurveTo(0.72*cw, 0.515*ch, 0.76*cw, 0.61*ch, 0.83*cw, 0.648*ch);
-  ctx.quadraticCurveTo(0.50*cw, 0.695*ch, 0.17*cw, 0.648*ch);
-  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); hillPath(); ctx.fill();
 
   function tower(fx, fw, fyb, fyt){
     var cx = fx*cw, w = fw*cw, yb = fyb*ch, yt = fyt*ch, x0 = cx-w/2;
@@ -1998,6 +2057,39 @@ function drawCastleScene(st){
     drawBush(hbx, (yB+0.012)*ch, (0.008 + rnd(hb*3.9)*0.005)*cw, day);
   }
   drawGrassTufts(0.24*cw, 0.76*cw, 0.575*ch, 0.655*ch, 46, day, 11);
+
+  // Reflejo del castillo y oleaje en el foso (solo donde hay agua a la vista)
+  ctx.save();
+  ctx.beginPath(); ctx.ellipse(pcx, pcy, prx, pry, 0, 0, TAU); ctx.clip();
+  ctx.beginPath(); ctx.rect(0, 0, cw, ch); hillPath(); ctx.clip('evenodd');
+  drawMirror(0.60*ch, 0.42*ch, 0.42, clamp(0.60 - wf*0.25 - S.rain*0.2, 0.2, 0.6), 0.0016*cw*(1+wf*2));
+  var mdg = ctx.createLinearGradient(0, pcy-pry, 0, pcy+pry);
+  mdg.addColorStop(0, cstr(waterD,0.35)); mdg.addColorStop(0.6, cstr(water,0.12)); mdg.addColorStop(1, cstr(waterL,0.30));
+  ctx.fillStyle = mdg;
+  ctx.fillRect(pcx-prx, pcy-pry, prx*2, pry*2);
+  for(var mb=0; mb<12; mb++){
+    var mby = pcy - pry + (pry*2)*(mb/12) + Math.sin(simT*(0.9+wf)+mb*1.4)*0.002*ch;
+    ctx.fillStyle = cstr(mb%2 ? waterD : waterL, mb%2 ? 0.18 : 0.14);
+    ctx.fillRect(pcx-prx, mby, prx*2, 1.2+mb*0.12);
+  }
+  ctx.strokeStyle = cstr(waterL, 0.6); ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for(var rp=0; rp<46; rp++){
+    var rpx = pcx - prx + ((rnd(rp*6.1) + simT*0.004*(1+wf*3)) % 1)*prx*2;
+    var rpy = pcy - pry*0.75 + rnd(rp*9.7)*pry*1.7 + Math.sin(simT*1.1+rp)*0.0015*ch;
+    var rpw = (0.006 + rnd(rp*2.3)*0.012)*cw;
+    ctx.moveTo(rpx, rpy); ctx.lineTo(rpx+rpw, rpy);
+  }
+  ctx.stroke();
+  // sombra de la orilla de la colina sobre el agua
+  ctx.strokeStyle = cstr([0,0,0],0.22); ctx.lineWidth = 0.012*ch;
+  ctx.beginPath(); hillPath(); ctx.stroke();
+  drawRainRings(pcx-prx, pcx+prx, pcy-pry*0.6, pcy+pry, 40);
+  ctx.restore();
+  ctx.strokeStyle = cstr(stoneS,1); ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.ellipse(pcx, pcy, prx, pry, 0, 0, Math.PI); ctx.stroke();
+  ctx.strokeStyle = cstr(stoneL,0.9); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(pcx, pcy+2, prx, pry, 0, 0, Math.PI); ctx.stroke();
 
   // Rocas y cascada
   function rock(fx, fy, fr){
@@ -2585,13 +2677,14 @@ function drawScene(st){
   }else{
     drawShore(st);
     drawWater(st);
-    drawWindowReflections(st.day);
-    drawDucks(st);
     drawHotel(st);
     drawTrees(st);
+    drawLamps(st);
+    drawWaterFx(st);
+    drawWindowReflections(st.day);
+    drawDucks(st);
     drawLighthouse(st);
     drawLakePlants(st);
-    drawLamps(st);
   }
   drawSnowLayers(st);
   drawRain();
