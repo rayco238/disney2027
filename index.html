@@ -1734,11 +1734,447 @@ function drawCastleScene(st){
 
   drawFireworks(day);
 
-  // Fondo: césped lejano y arboleda
+  // Fondo: el resto del parque asomando tras la arboleda
   ctx.fillStyle = cstr(lawn,1);
   ctx.fillRect(0, ch*0.585, cw, ch*0.415+2);
   var hazeT = mixc(mixc([170,196,206],[255,190,160],st.golden*0.5),[24,34,54],nt);
+  function far(c, k){ return mixc(mixc(c,[c[0]*0.26,c[1]*0.28,c[2]*0.4],nt*0.9), hazeT, k); }
+  var winL = [255,214,140];
+
+  var RIDE_COL = [[226,84,78],[84,140,226],[240,196,80],[110,190,120],[206,120,196],[244,244,238],[70,174,184],[240,140,70]];
+  var RIDE_SKIN = [[246,214,190],[228,184,150],[188,136,100]];
+
+  // Big Thunder Mountain (Frontierland): mesetas de roca roja
+  function rockMass(pts, col, seed){
+    var i, s, last = pts.length-1;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0]*cw, 0.61*ch);
+    for(i=0; i<=last; i++) ctx.lineTo(pts[i][0]*cw, pts[i][1]*ch);
+    ctx.lineTo(pts[last][0]*cw, 0.61*ch);
+    ctx.closePath();
+    var g = ctx.createLinearGradient(0, 0.30*ch, 0, 0.60*ch);
+    g.addColorStop(0, cstr(mixc(col,[255,214,170],0.22*day),1));
+    g.addColorStop(1, cstr(mixc(col,[90,50,44],0.35),1));
+    ctx.fillStyle = g; ctx.fill();
+    ctx.clip();
+    for(s=0; s<13; s++){
+      ctx.fillStyle = cstr(s%2 ? mixc(col,[255,220,180],0.35) : mixc(col,[70,36,30],0.4), 0.30);
+      ctx.fillRect(0, (0.315+s*0.022+rnd(s*4.7+seed)*0.008)*ch, 0.32*cw, (0.004+rnd(s*2.3+seed)*0.005)*ch);
+    }
+    // cara en sombra de cada cumbre
+    ctx.fillStyle = cstr(mixc(col,[60,30,30],0.5),0.32);
+    for(i=1; i<last; i++){
+      if(pts[i][1] <= pts[i-1][1] && pts[i][1] < pts[i+1][1]){
+        var px = pts[i][0]*cw, py = pts[i][1]*ch;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px+0.022*cw, py+0.06*ch); ctx.lineTo(px+0.026*cw, 0.61*ch); ctx.lineTo(px-0.003*cw, 0.61*ch); ctx.closePath(); ctx.fill();
+      }
+    }
+    ctx.strokeStyle = cstr(mixc(col,[60,30,30],0.5),0.35); ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(s=0; s<18; s++){
+      var kx = lerp(pts[0][0], pts[last][0], rnd(s*3.1+seed))*cw, ky = (0.38+rnd(s*5.3+seed)*0.16)*ch;
+      ctx.moveTo(kx, ky); ctx.lineTo(kx+(rnd(s*7.7+seed)-0.5)*5, ky+0.03*ch);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+  // Recorrido del tren minero: [x, y, tramo visible hasta el punto siguiente]
+  var TR = [[0.245,0.500,1],[0.215,0.512,1],[0.190,0.515,1],[0.168,0.490,1],[0.150,0.470,1],[0.128,0.482,1],[0.100,0.500,1],[0.070,0.490,0],
+            [0.060,0.425,1],[0.085,0.408,1],[0.110,0.400,1],[0.135,0.418,1],[0.165,0.436,1],[0.200,0.430,0]];
+  function drawThunderMountain(){
+    rockMass([[0.00,0.47],[0.022,0.455],[0.040,0.395],[0.062,0.39],[0.078,0.335],[0.098,0.33],[0.110,0.37],[0.135,0.375],[0.150,0.315],[0.172,0.31],[0.186,0.36],[0.210,0.375],[0.228,0.44],[0.262,0.46],[0.295,0.60]], far([196,120,84],0.30), 1);
+    rockMass([[0.00,0.505],[0.03,0.47],[0.05,0.50],[0.09,0.505],[0.11,0.46],[0.135,0.455],[0.15,0.50],[0.19,0.515],[0.21,0.475],[0.235,0.48],[0.25,0.53],[0.275,0.60]], far([214,138,92],0.18), 9);
+    var n = TR.length, L = [0], i, k, a, b;
+    for(i=0; i<n; i++){
+      a = TR[i]; b = TR[(i+1)%n];
+      L.push(L[i] + Math.sqrt(Math.pow((b[0]-a[0])*cw,2) + Math.pow((b[1]-a[1])*ch,2)));
+    }
+    // caballetes de madera y raíles
+    ctx.strokeStyle = cstr(far([124,88,60],0.18),0.9); ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for(i=0; i<n; i++){
+      if(!TR[i][2]) continue;
+      a = TR[i]; b = TR[(i+1)%n];
+      var m = Math.max(1, Math.round(Math.abs(b[0]-a[0])/0.006));
+      for(k=0; k<=m; k++){
+        var tx = lerp(a[0],b[0],k/m)*cw, ty = lerp(a[1],b[1],k/m)*ch;
+        ctx.moveTo(tx, ty); ctx.lineTo(tx, ty+0.022*ch);
+      }
+      ctx.moveTo(a[0]*cw, (a[1]+0.012)*ch); ctx.lineTo(b[0]*cw, (b[1]+0.012)*ch);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = cstr(far([64,48,42],0.12),1); ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for(i=0; i<n; i++){
+      if(!TR[i][2]) continue;
+      a = TR[i]; b = TR[(i+1)%n];
+      ctx.moveTo(a[0]*cw, a[1]*ch); ctx.lineTo(b[0]*cw, b[1]*ch);
+    }
+    ctx.stroke();
+    // bocas de túnel apuntaladas
+    for(i=0; i<n; i++){
+      if(TR[i][2]) continue;
+      for(k=0; k<2; k++){
+        a = TR[(i+k)%n];
+        ctx.fillStyle = cstr(far([44,26,24],0.1),1);
+        ctx.beginPath(); ctx.ellipse(a[0]*cw, (a[1]+0.004)*ch, 0.0075*cw, 0.019*ch, 0, Math.PI, TAU); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = cstr(far([150,108,72],0.15),1); ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.ellipse(a[0]*cw, (a[1]+0.004)*ch, 0.0075*cw, 0.019*ch, 0, Math.PI, TAU); ctx.stroke();
+      }
+    }
+    // tren: locomotora y vagonetas con pasajeros
+    var head = (simT*0.05*cw) % L[n];
+    var cl = 0.0090*cw, chh = 0.0088*ch;
+    for(var c=5; c>=0; c--){
+      var d = head - c*0.0108*cw; if(d<0) d += L[n];
+      for(i=0; i<n-1 && L[i+1]<d; i++){}
+      if(!TR[i][2]) continue;
+      a = TR[i]; b = TR[(i+1)%n];
+      var f = (d-L[i])/(L[i+1]-L[i]);
+      var ang = Math.atan2((b[1]-a[1])*ch, (b[0]-a[0])*cw), dir = b[0]<a[0] ? -1 : 1;
+      var down = (b[1]-a[1]) > 0.008;
+      ctx.save();
+      ctx.translate(lerp(a[0],b[0],f)*cw, lerp(a[1],b[1],f)*ch);
+      ctx.rotate(dir<0 ? ang+Math.PI : ang);
+      ctx.scale(dir, 1);
+      if(c===0){
+        ctx.fillStyle = cstr(far([58,44,42],0.08),1);
+        ctx.fillRect(-cl/2, -chh*0.95, cl, chh*0.8);
+        ctx.fillRect(cl*0.18, -chh*1.9, cl*0.16, chh*1.0);
+        ctx.fillStyle = cstr(far([164,56,44],0.08),1);
+        ctx.fillRect(-cl/2, -chh*1.75, cl*0.42, chh*0.9);
+        ctx.fillStyle = cstr(gbl,1);
+        ctx.fillRect(cl*0.14, -chh*2.0, cl*0.24, chh*0.2);
+        if(lit){ ctx.fillStyle = cstr(winL,0.95); ctx.beginPath(); ctx.arc(cl*0.5, -chh*0.6, 1.8, 0, TAU); ctx.fill(); }
+        for(k=0; k<3; k++){
+          var pf = (simT*1.6 + k/3) % 1;
+          ctx.fillStyle = cstr(far([244,244,244],0.1), (1-pf)*0.6);
+          ctx.beginPath(); ctx.arc(cl*0.26 - pf*cl*1.1, -chh*2.2 - pf*chh*1.6, 1.5+pf*4, 0, TAU); ctx.fill();
+        }
+      } else {
+        for(k=0; k<2; k++){
+          var rx0 = -cl*0.22 + k*cl*0.44, rc = far(RIDE_COL[(c*2+k)%RIDE_COL.length],0.08);
+          ctx.fillStyle = cstr(rc,1);
+          ctx.fillRect(rx0-1.4, -chh*1.35, 2.8, chh*0.7);
+          if(down || k===(c%2)){
+            ctx.strokeStyle = cstr(rc,1); ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(rx0, -chh*1.2); ctx.lineTo(rx0-2.2, -chh*2.1+Math.sin(simT*9+c+k)*1.2);
+            ctx.moveTo(rx0, -chh*1.2); ctx.lineTo(rx0+2.2, -chh*2.1+Math.cos(simT*9+c+k)*1.2);
+            ctx.stroke();
+          }
+          ctx.fillStyle = cstr(far(RIDE_SKIN[(c+k)%3],0.08),1);
+          ctx.beginPath(); ctx.arc(rx0, -chh*1.62, 1.7, 0, TAU); ctx.fill();
+        }
+        ctx.fillStyle = cstr(far([150,74,48],0.08),1);
+        ctx.fillRect(-cl/2, -chh*0.95, cl, chh*0.8);
+        ctx.fillStyle = cstr(far([96,48,36],0.08),1);
+        ctx.fillRect(-cl/2, -chh*0.95, cl, chh*0.2);
+      }
+      ctx.fillStyle = cstr(far([30,26,28],0.05),1);
+      ctx.beginPath(); ctx.arc(-cl*0.28, -chh*0.1, 1.6, 0, TAU); ctx.arc(cl*0.28, -chh*0.1, 1.6, 0, TAU); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // Space Mountain (Discoveryland): cúpula y cañón Columbiad que dispara el tren
+  function drawSpaceMountain(){
+    var smx = 0.885*cw, smy = 0.60*ch, smrx = 0.074*cw, smry = 0.18*ch, k;
+    var smBr = far([190,152,98],0.28), smGr = far([92,150,140],0.28), smDk = far([96,74,58],0.28);
+    ctx.fillStyle = cstr(smDk,1);
+    ctx.fillRect(smx-smrx*1.1, smy-0.035*ch, smrx*2.2, 0.04*ch);
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(smx, smy-0.03*ch, smrx, smry, 0, Math.PI, TAU); ctx.closePath();
+    var smg = ctx.createLinearGradient(smx-smrx,0,smx+smrx,0);
+    smg.addColorStop(0,cstr(mixc(smGr,smDk,0.25),1)); smg.addColorStop(0.32,cstr(mixc(smGr,[255,255,255],0.3*day),1)); smg.addColorStop(1,cstr(mixc(smGr,smDk,0.65),1));
+    ctx.fillStyle = smg; ctx.fill();
+    ctx.clip();
+    var topY = smy-0.03*ch-smry;
+    // gajos de cobre y bandas remachadas
+    ctx.strokeStyle = cstr(smBr,0.95); ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for(k=-5; k<=5; k++){ ctx.moveTo(smx, topY); ctx.quadraticCurveTo(smx+k*smrx*0.215, topY+smry*0.3, smx+k*smrx*0.22, smy); }
+    ctx.stroke();
+    for(k=0; k<3; k++){
+      var by = topY + smry*[0.30,0.56,0.80][k];
+      ctx.fillStyle = cstr(smBr,0.92);
+      ctx.fillRect(smx-smrx, by, smrx*2, 0.008*ch);
+      ctx.fillStyle = lit ? cstr(winL,0.9) : cstr(smDk,0.8);
+      for(var rv=0; rv<22; rv++){ ctx.beginPath(); ctx.arc(smx-smrx+rv*smrx/10.5, by+0.004*ch, 1.2, 0, TAU); ctx.fill(); }
+    }
+    ctx.fillStyle = cstr(smBr,1);
+    ctx.beginPath(); ctx.ellipse(smx, topY, smrx*0.2, smry*0.07, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = cstr(smBr,1); ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.moveTo(smx, topY); ctx.lineTo(smx, topY-0.035*ch); ctx.stroke();
+    ctx.fillStyle = cstr(gbl,1);
+    ctx.beginPath(); ctx.arc(smx, topY-0.012*ch, 0.003*cw, 0, TAU); ctx.fill();
+
+    // cañón apoyado sobre la cúpula
+    var x0 = smx+0.018*cw, y0 = smy-0.04*ch, x1 = smx+0.080*cw, y1 = topY-0.02*ch;
+    var len = Math.sqrt((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)), ux = (x1-x0)/len, uy = (y1-y0)/len;
+    var bw = 0.014*cw, ang = Math.atan2(uy, ux);
+    ctx.strokeStyle = cstr(smDk,1); ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(lerp(x0,x1,0.55), lerp(y0,y1,0.55)); ctx.lineTo(lerp(x0,x1,0.55)+0.012*cw, smy);
+    ctx.moveTo(lerp(x0,x1,0.8), lerp(y0,y1,0.8)); ctx.lineTo(lerp(x0,x1,0.8)+0.016*cw, smy);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(x0, y0); ctx.rotate(ang);
+    var cg2 = ctx.createLinearGradient(0,-bw/2,0,bw/2);
+    cg2.addColorStop(0,cstr(mixc(smDk,smBr,0.55),1)); cg2.addColorStop(0.4,cstr(smDk,1)); cg2.addColorStop(1,cstr(mixc(smDk,[20,16,16],0.5),1));
+    ctx.fillStyle = cg2;
+    ctx.fillRect(0, -bw/2, len, bw);
+    ctx.fillStyle = cstr(smBr,1);
+    for(k=0; k<6; k++) ctx.fillRect(len*(0.08+k*0.17), -bw*0.62, len*0.03, bw*1.24);
+    ctx.fillRect(len*0.955, -bw*0.75, len*0.045, bw*1.5);
+    ctx.fillStyle = cstr(smGr,1);
+    ctx.fillRect(-len*0.05, -bw*0.8, len*0.09, bw*1.6);
+    // raíl sobre el lomo del cañón
+    ctx.fillStyle = cstr(far([56,48,48],0.2),1);
+    ctx.fillRect(-len*0.12, -bw*0.62-2, len*1.07, 2);
+
+    var ph = (simT % 8)/8, p, launch = ph>0.5 && ph<0.74;
+    if(ph < 0.5) p = 0.30 + 0.05*smooth(0,0.2,ph);
+    else if(ph < 0.88) p = 0.35 + Math.pow((ph-0.5)/0.22, 2)*1.2;
+    else p = lerp(-0.10, 0.30, smooth(0.88,1,ph));
+    var cl = 0.0056*cw, chh = 0.0078*ch;
+    for(k=0; k<4; k++){
+      var pc = p - k*0.058;
+      if(pc < -0.1 || pc > 0.95) continue;
+      var tx = pc*len, ty = -bw*0.62-2;
+      for(var r=0; r<2; r++){
+        var rx0 = tx - cl*0.22 + r*cl*0.44, rc = far(RIDE_COL[(k*2+r+3)%RIDE_COL.length],0.1);
+        ctx.fillStyle = cstr(rc,1);
+        ctx.fillRect(rx0-1.3, ty-chh*1.35, 2.6, chh*0.7);
+        if(launch){
+          ctx.strokeStyle = cstr(rc,1); ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(rx0, ty-chh*1.2); ctx.lineTo(rx0-2.4, ty-chh*2.1);
+          ctx.moveTo(rx0, ty-chh*1.2); ctx.lineTo(rx0-0.4, ty-chh*2.3);
+          ctx.stroke();
+        }
+        ctx.fillStyle = cstr(far(RIDE_SKIN[(k+r)%3],0.1),1);
+        ctx.beginPath(); ctx.arc(rx0, ty-chh*1.6, 1.6, 0, TAU); ctx.fill();
+      }
+      ctx.fillStyle = cstr(far([206,176,112],0.1),1);
+      ctx.fillRect(tx-cl/2, ty-chh*0.9, cl, chh*0.9);
+      ctx.fillStyle = cstr(far([70,120,116],0.1),1);
+      ctx.fillRect(tx-cl/2, ty-chh*0.45, cl, chh*0.2);
+    }
+    // fogonazo y humo en la boca al disparar
+    var sm = (ph-0.64)/0.34;
+    if(sm > 0 && sm < 1){
+      for(k=0; k<5; k++){
+        ctx.fillStyle = cstr(far([236,236,240],0.1), (1-sm)*0.5);
+        ctx.beginPath(); ctx.arc(len*(1.0+sm*0.22+k*0.03) , -bw*0.2 + (rnd(k*3.7)-0.5)*bw*(1+sm*3) - sm*bw*k*0.3, bw*(0.35+sm*(0.5+rnd(k*5.1)*0.6)), 0, TAU); ctx.fill();
+      }
+      if(sm < 0.25){
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = cstr([255,220,150], (1-sm*4)*0.8);
+        ctx.beginPath(); ctx.arc(len*1.02, 0, bw*(0.8+sm*3), 0, TAU); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+    ctx.restore();
+    // engranaje de la base
+    ctx.fillStyle = cstr(smBr,1);
+    ctx.beginPath(); ctx.arc(x0, y0, 0.011*cw, 0, TAU); ctx.fill();
+    ctx.strokeStyle = cstr(smDk,1); ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for(k=0; k<6; k++){
+      var ga = k/6*TAU + simT*0.4;
+      ctx.moveTo(x0, y0); ctx.lineTo(x0+Math.cos(ga)*0.011*cw, y0+Math.sin(ga)*0.011*cw);
+    }
+    ctx.stroke();
+  }
+
+  // Carrusel de Lancelot: caballos girando bajo la carpa
+  function drawCarousel(fx){
+    var cx = fx*cw, yb = 0.606*ch, w = 0.080*cw, yv = 0.538*ch, yp = 0.462*ch, R = w*0.40, n = 10, i;
+    var pk = far([222,112,140],0.05), wh = far([250,242,232],0.05), gd = far([230,184,92],0.05);
+    var HORSE = [[250,246,238],[120,84,60],[60,54,58],[214,190,150]];
+    ctx.fillStyle = cstr([0,0,0],0.2);
+    ctx.beginPath(); ctx.ellipse(cx, yb+0.005*ch, w*0.58, 0.009*ch, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(far([150,60,74],0.05),1);
+    ctx.beginPath(); ctx.ellipse(cx, yb+0.002*ch, w*0.52, 0.008*ch, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(gd,1);
+    ctx.beginPath(); ctx.ellipse(cx, yb-0.002*ch, w*0.52, 0.007*ch, 0, 0, TAU); ctx.fill();
+    if(lit){
+      var cgl = ctx.createLinearGradient(0, yv, 0, yb);
+      cgl.addColorStop(0, cstr([255,220,150],0.55)); cgl.addColorStop(1, cstr([255,220,150],0.15));
+      ctx.fillStyle = cgl;
+      ctx.fillRect(cx-w*0.48, yv, w*0.96, yb-yv);
+    }
+    function horse(i, front){
+      var th = simT*0.55 + i*TAU/n, sn = Math.sin(th), cs = Math.cos(th);
+      if((sn>=0) !== front) return;
+      var hx = cx + cs*R, dir = sn>=0 ? -1 : 1, u = 0.0050*cw*(0.82+0.18*sn), dim = front ? 0 : 0.32;
+      var hy = yb - 0.024*ch + sn*0.004*ch + Math.sin(th*4+i*1.7)*0.006*ch;
+      var sh = [50,36,48];
+      ctx.strokeStyle = cstr(mixc(gd,sh,dim),1); ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(hx, yv); ctx.lineTo(hx, yb-0.003*ch+sn*0.004*ch); ctx.stroke();
+      var hc = cstr(mixc(far(HORSE[i%4],0.05),sh,dim),1);
+      ctx.strokeStyle = hc; ctx.lineWidth = Math.max(1, u*0.32);
+      ctx.beginPath();
+      ctx.moveTo(hx+dir*u*0.8, hy+u*0.2); ctx.lineTo(hx+dir*u*1.6, hy+u*1.2);
+      ctx.moveTo(hx-dir*u*0.8, hy+u*0.2); ctx.lineTo(hx-dir*u*1.5, hy+u*1.2);
+      ctx.moveTo(hx-dir*u*1.2, hy-u*0.2); ctx.lineTo(hx-dir*u*1.9, hy+u*0.5);
+      ctx.stroke();
+      ctx.fillStyle = hc;
+      ctx.beginPath(); ctx.ellipse(hx, hy, u*1.3, u*0.62, 0, 0, TAU); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(hx+dir*u*0.6, hy-u*0.3); ctx.lineTo(hx+dir*u*1.4, hy-u*1.5); ctx.lineTo(hx+dir*u*2.1, hy-u*1.0);
+      ctx.lineTo(hx+dir*u*1.9, hy-u*0.7); ctx.lineTo(hx+dir*u*1.3, hy+u*0.2);
+      ctx.closePath(); ctx.fill();
+      var rc = cstr(mixc(far(RIDE_COL[(i*3)%RIDE_COL.length],0.05),sh,dim),1);
+      ctx.fillStyle = rc;
+      ctx.fillRect(hx-u*0.4, hy-u*2.0, u*0.8, u*1.6);
+      if(i%3===0){
+        ctx.strokeStyle = rc; ctx.lineWidth = Math.max(1, u*0.26);
+        ctx.beginPath(); ctx.moveTo(hx, hy-u*1.7); ctx.lineTo(hx-dir*u*0.8, hy-u*2.9+Math.sin(simT*7+i)*u*0.35); ctx.stroke();
+      }
+      ctx.fillStyle = cstr(mixc(far(RIDE_SKIN[i%3],0.05),sh,dim),1);
+      ctx.beginPath(); ctx.arc(hx+dir*u*0.05, hy-u*2.4, u*0.45, 0, TAU); ctx.fill();
+    }
+    for(i=0; i<n; i++) horse(i, false);
+    ctx.fillStyle = cstr(wh,1);
+    ctx.fillRect(cx-w*0.07, yv, w*0.14, yb-yv);
+    ctx.fillStyle = cstr(pk,1);
+    ctx.fillRect(cx-w*0.07, yv, w*0.035, yb-yv); ctx.fillRect(cx+w*0.01, yv, w*0.03, yb-yv);
+    ctx.fillStyle = lit ? cstr(winL,0.9) : cstr(gd,1);
+    for(i=0; i<4; i++){ ctx.beginPath(); ctx.arc(cx, yv+(yb-yv)*(0.2+i*0.2), 1.5, 0, TAU); ctx.fill(); }
+    for(i=0; i<n; i++) horse(i, true);
+    ctx.strokeStyle = cstr(gd,1); ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(cx-w*0.47, yv); ctx.lineTo(cx-w*0.47, yb);
+    ctx.moveTo(cx+w*0.47, yv); ctx.lineTo(cx+w*0.47, yb);
+    ctx.stroke();
+    // carpa a rayas con festón
+    var nw = 10;
+    for(i=0; i<nw; i++){
+      ctx.fillStyle = cstr(i%2 ? wh : pk,1);
+      ctx.beginPath(); ctx.moveTo(cx, yp); ctx.lineTo(cx-w/2+i*w/nw, yv); ctx.lineTo(cx-w/2+(i+1)*w/nw+0.5, yv); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = cstr(i%2 ? pk : wh,1);
+      ctx.beginPath(); ctx.arc(cx-w/2+(i+0.5)*w/nw, yv, w/nw/2, 0, Math.PI); ctx.fill();
+    }
+    ctx.fillStyle = cstr([0,0,0],0.13);
+    ctx.beginPath(); ctx.moveTo(cx, yp); ctx.lineTo(cx+w/2, yv); ctx.lineTo(cx+w*0.12, yv); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = cstr(gd,1);
+    ctx.fillRect(cx-w/2, yv-0.003*ch, w, 0.004*ch);
+    if(lit){
+      ctx.fillStyle = cstr(winL,0.95);
+      for(i=0; i<=nw; i++){ ctx.beginPath(); ctx.arc(cx-w/2+i*w/nw, yv+w/nw/2, 1.7, 0, TAU); ctx.fill(); }
+    }
+    ctx.strokeStyle = cstr(gbl,0.95); ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.moveTo(cx, yp); ctx.lineTo(cx, yp-0.022*ch); ctx.stroke();
+    ctx.fillStyle = cstr(pk,1);
+    ctx.beginPath(); ctx.moveTo(cx, yp-0.022*ch); ctx.lineTo(cx+0.010*cw, yp-0.017*ch+Math.sin(simT*3+fx*9)*0.002*ch*(0.5+wf)); ctx.lineTo(cx, yp-0.012*ch); ctx.closePath(); ctx.fill();
+  }
+
+  // Dumbo: elefantes voladores que suben y bajan alrededor del eje
+  function drawDumbo(fx){
+    var cx = fx*cw, yb = 0.606*ch, R = 0.034*cw, hubY = 0.556*ch, n = 8, i;
+    var gd = far([230,184,92],0.05), pk = far([222,112,140],0.05), grey = far([180,186,200],0.05);
+    var HAT = [[236,84,84],[250,206,80],[90,150,236],[140,206,120]];
+    ctx.fillStyle = cstr([0,0,0],0.2);
+    ctx.beginPath(); ctx.ellipse(cx, yb+0.005*ch, R*1.25, 0.009*ch, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(far([232,224,214],0.05),1);
+    ctx.beginPath(); ctx.ellipse(cx, yb+0.001*ch, R*1.18, 0.008*ch, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(far([120,196,208],0.05),1);
+    ctx.beginPath(); ctx.ellipse(cx, yb-0.001*ch, R*1.05, 0.006*ch, 0, 0, TAU); ctx.fill();
+    function eleph(i, front){
+      var th = simT*0.7 + i*TAU/n, sn = Math.sin(th), cs = Math.cos(th);
+      if((sn>=0) !== front) return;
+      var ex = cx + cs*R, dir = sn>=0 ? -1 : 1, u = 0.0046*cw*(0.82+0.18*sn), dim = front ? 0 : 0.3;
+      var ey = hubY - 0.010*ch + sn*0.005*ch - (0.5+0.5*Math.sin(simT*0.9+i*2.4))*0.036*ch;
+      var sh = [50,44,60];
+      ctx.strokeStyle = cstr(mixc(far([140,144,156],0.05),sh,dim),1); ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(cx, hubY); ctx.lineTo(ex, ey+u*0.4); ctx.stroke();
+      var gc = cstr(mixc(grey,sh,dim),1);
+      for(var r=0; r<2; r++){
+        ctx.fillStyle = cstr(mixc(far(RIDE_COL[(i*2+r+1)%RIDE_COL.length],0.05),sh,dim),1);
+        ctx.fillRect(ex-dir*u*(0.1+r*0.8)-u*0.3, ey-u*1.9, u*0.6, u*1.2);
+        ctx.fillStyle = cstr(mixc(far(RIDE_SKIN[(i+r)%3],0.05),sh,dim),1);
+        ctx.beginPath(); ctx.arc(ex-dir*u*(0.1+r*0.8), ey-u*2.2, u*0.4, 0, TAU); ctx.fill();
+      }
+      ctx.fillStyle = gc;
+      ctx.beginPath(); ctx.ellipse(ex, ey, u*1.6, u*1.0, 0, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex+dir*u*1.5, ey-u*0.5, u*0.85, 0, TAU); ctx.fill();
+      ctx.strokeStyle = gc; ctx.lineWidth = Math.max(1, u*0.42); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(ex+dir*u*2.1, ey-u*0.3); ctx.quadraticCurveTo(ex+dir*u*2.9, ey+u*0.5, ex+dir*u*3.2, ey-u*0.5); ctx.stroke();
+      ctx.lineCap = 'butt';
+      ctx.fillStyle = cstr(mixc(far([214,170,180],0.05),sh,dim),1);
+      ctx.beginPath(); ctx.ellipse(ex+dir*u*0.7, ey-u*0.7, u*0.75, u*1.0+Math.sin(simT*5+i)*u*0.15, dir*-0.3, 0, TAU); ctx.fill();
+      ctx.fillStyle = cstr(mixc(far(HAT[i%4],0.05),sh,dim),1);
+      ctx.beginPath(); ctx.moveTo(ex+dir*u*1.0, ey-u*1.2); ctx.lineTo(ex+dir*u*1.5, ey-u*2.1); ctx.lineTo(ex+dir*u*2.0, ey-u*1.2); ctx.closePath(); ctx.fill();
+    }
+    for(i=0; i<n; i++) eleph(i, false);
+    ctx.fillStyle = cstr(pk,1);
+    ctx.fillRect(cx-0.005*cw, hubY-0.012*ch, 0.010*cw, yb-hubY+0.012*ch);
+    ctx.fillStyle = cstr(gd,1);
+    ctx.fillRect(cx-0.008*cw, hubY-0.006*ch, 0.016*cw, 0.012*ch);
+    ctx.fillRect(cx-0.007*cw, yb-0.012*ch, 0.014*cw, 0.012*ch);
+    // globo de Timoteo en lo alto
+    ctx.strokeStyle = cstr(gd,1); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx, hubY-0.012*ch); ctx.lineTo(cx, hubY-0.040*ch); ctx.stroke();
+    ctx.fillStyle = cstr(far([236,84,84],0.05),1);
+    ctx.beginPath(); ctx.arc(cx, hubY-0.050*ch, 0.0075*cw, 0, TAU); ctx.fill();
+    ctx.fillStyle = cstr(far([250,206,80],0.05),1);
+    ctx.beginPath(); ctx.ellipse(cx, hubY-0.050*ch, 0.003*cw, 0.0075*cw, 0, 0, TAU); ctx.fill();
+    if(lit){
+      ctx.fillStyle = cstr(winL,0.95);
+      for(i=0; i<5; i++){ ctx.beginPath(); ctx.arc(cx-0.006*cw+i*0.003*cw, hubY, 1.4, 0, TAU); ctx.fill(); }
+    }
+    for(i=0; i<n; i++) eleph(i, true);
+  }
+
+  // Casas de Fantasyland entre los árboles
+  function house(fx, fw, fyt, frh, wc, rc, hip){
+    var x0 = (fx-fw/2)*cw, w = fw*cw, yt = fyt*ch, yb = 0.605*ch, rh = frh*ch, cx = fx*cw;
+    ctx.fillStyle = cstr(far(wc,0.16),1);
+    ctx.fillRect(x0, yt, w, yb-yt);
+    ctx.fillStyle = cstr([0,0,0],0.10);
+    ctx.fillRect(x0+w*0.64, yt, w*0.36, yb-yt);
+    ctx.strokeStyle = cstr(far([112,82,62],0.2),0.85); ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x0, yt+0.032*ch); ctx.lineTo(x0+w, yt+0.032*ch);
+    for(var hv=0; hv<=3; hv++){ ctx.moveTo(x0+w*hv/3, yt); ctx.lineTo(x0+w*hv/3, yb); }
+    ctx.stroke();
+    for(var hw=0; hw<3; hw++){
+      ctx.fillStyle = (lit && rnd(fx*71+hw*3.7)>0.3) ? cstr(winL,0.9) : cstr(far(NAVY,0.2),0.85);
+      ctx.fillRect(x0+w*(1/6+hw/3)-w*0.07, yt+0.009*ch, w*0.14, 0.017*ch);
+    }
+    var rxp = hip ? x0+w*0.8 : cx;
+    ctx.fillStyle = cstr(far(rc,0.16),1);
+    ctx.beginPath();
+    ctx.moveTo(x0-w*0.08, yt);
+    if(hip) ctx.lineTo(x0+w*0.2, yt-rh);
+    ctx.lineTo(rxp, yt-rh); ctx.lineTo(x0+w*1.08, yt);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = cstr([0,0,0],0.16);
+    ctx.beginPath(); ctx.moveTo(rxp, yt-rh); ctx.lineTo(x0+w*1.08, yt); ctx.lineTo(x0+w*0.62, yt); ctx.closePath(); ctx.fill();
+    if(!hip){
+      ctx.fillStyle = lit ? cstr(winL,0.9) : cstr(far(NAVY,0.2),0.85);
+      ctx.beginPath(); ctx.arc(cx, yt-rh*0.36, w*0.07, 0, TAU); ctx.fill();
+    } else {
+      ctx.fillStyle = cstr(far([150,96,80],0.16),1);
+      ctx.fillRect(x0+w*0.30, yt-rh-0.02*ch, w*0.12, 0.024*ch);
+    }
+  }
+  var H_CREAM = [240,226,200], H_PINK = [236,200,188], H_OCRE = [226,196,140];
+  var R_RED = [150,74,60], R_SLATE = [70,96,128], R_GREEN = [74,112,96];
+
   for(var bt=0; bt<3; bt++){
+    if(bt===2){
+      drawThunderMountain();
+      drawSpaceMountain();
+      house(0.256, 0.044, 0.492, 0.042, H_OCRE, R_GREEN, true);
+      house(0.300, 0.030, 0.470, 0.058, H_CREAM, R_RED, false);
+      house(0.702, 0.030, 0.472, 0.058, H_PINK, R_SLATE, false);
+      house(0.744, 0.042, 0.494, 0.042, H_CREAM, R_RED, true);
+    }
     var btC = bt===0 ? mixc(farTD,hazeT,0.55) : (bt===1 ? farTD : farT);
     var btN = bt===0 ? 30 : 44;
     for(var bp=0; bp<2; bp++){
@@ -1754,19 +2190,6 @@ function drawCastleScene(st){
       }
       ctx.fill();
     }
-    if(bt===0){
-      // cipreses asomando sobre la arboleda
-      ctx.fillStyle = cstr(mixc(farTD,hazeT,0.3),1);
-      var CYP = [0.03,0.075,0.20,0.245,0.29,0.705,0.75,0.83,0.875,0.965];
-      for(var cyi=0; cyi<CYP.length; cyi++){
-        var cyh = (0.07+rnd(cyi*4.4)*0.035)*ch, cyx = CYP[cyi]*cw + Math.sin(simT*1.3+cyi)*wf*0.002*cw;
-        ctx.beginPath();
-        ctx.moveTo(CYP[cyi]*cw-0.007*cw, 0.57*ch);
-        ctx.quadraticCurveTo(CYP[cyi]*cw-0.010*cw, 0.57*ch-cyh*0.5, cyx, 0.57*ch-cyh);
-        ctx.quadraticCurveTo(CYP[cyi]*cw+0.010*cw, 0.57*ch-cyh*0.5, CYP[cyi]*cw+0.007*cw, 0.57*ch);
-        ctx.closePath(); ctx.fill();
-      }
-    }
   }
   ctx.fillStyle = cstr(farT,1);
   ctx.fillRect(0, ch*0.585, cw, ch*0.03);
@@ -1774,6 +2197,9 @@ function drawCastleScene(st){
   lg0.addColorStop(0, cstr(lawnS,1)); lg0.addColorStop(0.35, cstr(lawn,1)); lg0.addColorStop(1, cstr(lawnL,1));
   ctx.fillStyle = lg0;
   ctx.fillRect(0, ch*0.605, cw, ch*0.17);
+
+  drawDumbo(0.185);
+  drawCarousel(0.812);
 
   // Foso
   var pcx = 0.50*cw, pcy = 0.655*ch, prx = 0.40*cw, pry = 0.068*ch;
@@ -2384,6 +2810,22 @@ function drawCastleScene(st){
   var pord = [];
   for(var pi2=0; pi2<lanes.length; pi2++) pord.push(pi2);
   pord.sort(function(a,b){ return lanes[a][1]-lanes[b][1]; });
+  // Visitantes cruzando el puente: unos entran por la puerta del castillo y otros salen
+  var NBW = 10, bwL = [];
+  for(var bw2=0; bw2<NBW; bw2++){
+    var bwt = (simT*0.028 + ((bw2*7)%NBW)/NBW + rnd(bw2*4.3)*0.05) % 1;
+    bwL.push([bw2, (bw2%2===0) ? Math.pow(1-bwt,1.6) : Math.pow(bwt,1.6)]);
+  }
+  bwL.sort(function(a,b){ return a[1]-b[1]; });
+  for(var bw3=0; bw3<NBW; bw3++){
+    var bwi = bwL[bw3][0], bwf = bwL[bw3][1];
+    var bwIn = (bwi%2===0), bwSide = (bwi%4<2 ? -1 : 1);
+    var bwx = bx0 + bwSide*lerp(0.012, 0.040, bwf)*cw*(0.35+0.5*rnd(bwi*8.9));
+    // se desvanecen al cruzar el umbral de la puerta
+    ctx.globalAlpha = smooth(0, 0.07, bwf);
+    personAt(bwx, (0.538+0.237*bwf)*ch, simT*(4.2+rnd(bwi*2.7)*1.4)+bwi*1.9, bwIn ? -bwSide : bwSide, bwi+15);
+  }
+  ctx.globalAlpha = 1;
   personAt(0.486*cw, 0.782*ch, 0, 1, 8);
   personAt(0.506*cw, 0.784*ch, 0, 1, 7);
   for(var po=0; po<pord.length; po++){
