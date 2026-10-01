@@ -839,17 +839,32 @@ function drawHotel(st){
     ctx.fillRect(pedX-swx/2, sy+0.008*ch, swx, 0.0025*ch);
   }
 
-  // Rótulo
-  var sn = smooth(0.4,0.15,day);
-  ctx.fillStyle = cstr(mixc([250,246,234],[52,58,74],sn),1);
-  ctx.fillRect(pedX-0.10*cw, 0.462*ch, 0.20*cw, 0.026*ch);
-  ctx.strokeStyle = cstr(mixc(NAVY,[90,100,122],sn),1);
+  // Rótulo: tablero azul marino con letras doradas, iluminado al caer la luz
+  var sgl = smooth(0.7,0.4,day);
+  var sx0 = pedX-0.105*cw, sy0 = 0.459*ch, sw0 = 0.21*cw, sh0 = 0.031*ch;
+  ctx.fillStyle = cstr(mixc(TRIM,[70,78,96],1-day),1);
+  ctx.fillRect(sx0-3, sy0-3, sw0+6, sh0+6);
+  var sbg = ctx.createLinearGradient(0,sy0,0,sy0+sh0);
+  sbg.addColorStop(0, cstr(mixc([44,62,92],[30,44,70],1-day)));
+  sbg.addColorStop(1, cstr(mixc(NAVY,[18,26,44],1-day)));
+  ctx.fillStyle = sbg;
+  ctx.fillRect(sx0, sy0, sw0, sh0);
+  ctx.strokeStyle = cstr(mixc([255,217,138],GOLD,sgl*0.5), 0.9);
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(pedX-0.10*cw+2, 0.462*ch+2, 0.20*cw-4, 0.026*ch-4);
-  ctx.fillStyle = cstr(mixc(NAVY,[200,206,222],sn),1);
-  ctx.font = '700 '+Math.max(11,ch*0.0165)+'px Poppins, sans-serif';
+  ctx.strokeRect(sx0+3, sy0+3, sw0-6, sh0-6);
+  ctx.font = '700 '+Math.max(12,ch*0.0195)+'px Poppins, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('NEWPORT BAY CLUB', pedX, 0.4755*ch);
+  ctx.save();
+  if(sgl>0.02){ ctx.shadowColor = cstr(GOLD_GLOW, 0.9*sgl); ctx.shadowBlur = 10*sgl; }
+  ctx.fillStyle = cstr(mixc([255,217,138],[255,236,180],sgl),1);
+  ctx.fillText('NEWPORT BAY CLUB', pedX, sy0+sh0*0.54);
+  ctx.restore();
+  if(sgl>0.02){
+    var slg = ctx.createRadialGradient(pedX, sy0+sh0/2, 0.01*cw, pedX, sy0+sh0/2, 0.13*cw);
+    slg.addColorStop(0, cstr(LAMP_GLOW, 0.22*sgl)); slg.addColorStop(1, cstr(LAMP_GLOW, 0));
+    ctx.fillStyle = slg;
+    ctx.fillRect(pedX-0.13*cw, sy0-0.03*ch, 0.26*cw, sh0+0.06*ch);
+  }
 
   // Setos
   var hd = mixc(TREE_D,[14,24,40],1-day*0.85), hl = mixc(TREE,[20,34,54],1-day*0.85);

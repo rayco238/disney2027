@@ -28,7 +28,7 @@ There is **no build step** — the entire app lives in `index.html`.
 - `codeInfo()` — maps Open-Meteo weather codes to scene states.
 - `fetchWeather()` — Open-Meteo call; refresh interval set at the bottom of the script.
 - `TARGET`, `LAT`, `LON` — trip date and location constants at the top of the `<script>`.
-- `sw.js` — service worker (cache name `disney-2027-v5`); bump the `CACHE` constant when the shell assets change.
+- `sw.js` — service worker (cache name `disney-2027-v6`); bump the `CACHE` constant when the shell assets change.
 
 ## Deploy
 
